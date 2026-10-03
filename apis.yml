@@ -1,32 +1,149 @@
 aid: arcmira
+
 name: Arcmira
-description: 'Arcmira is a company surfaced via the API Evangelist harvest backlog (source: new-submission)
-  and added to the network as a stub for full-pipeline profiling.'
+
+image: https://arcmira.com/arcmira-cover.png?v=20261002
+
+description: Arcmira provides AI-powered search of YouTube transcript data, enabling developers to retrieve timestamped passages, speaker mentions,
+  sponsors, and ad reads. Their platform offers JavaScript and Python SDKs, a CLI, and an OAuth-enabled remote MCP for integrating spoken web
+  insights into applications. The service includes monitoring capabilities and commercial intelligence features, targeting developers building
+  conversational AI and analytics tools.
+
 url: https://raw.githubusercontent.com/api-evangelist/arcmira/refs/heads/main/apis.yml
+
 x-type: company
+
 x-source: harvest:new-submission
-x-tier: stub
-x-tier-reason: harvest
+
+x-tier: profiled
+x-tier-reason: enrichment pass 2026-10-03 (modular-v1; was harvest)
+
 specificationVersion: '0.20'
+
 created: '2026-10-03'
+
 modified: '2026-10-03'
+
 tags:
-- Company
-apis: []
+- AI
+- Search
+- YouTube
+- Transcripts
+- SDK
+
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+
 common:
+- type: Plans
+  url: plans/arcmira-plans-pricing.yml
+- type: Spectral
+  url: rules/arcmira-rules.yml
+- type: JSONLD
+  url: json-ld/arcmira-context.jsonld
+- type: Vocabulary
+  url: vocabulary/arcmira-vocabulary.yml
+- type: DataModel
+  url: data-model/arcmira-data-model.yml
+- type: CLI
+  url: cli/arcmira-cli.yml
+- type: ChangeLog
+  url: changelog/arcmira-changelog.yml
+- type: Idempotency
+  url: conventions/arcmira-conventions.yml
+- type: Conventions
+  url: conventions/arcmira-conventions.yml
+- type: Authentication
+  url: authentication/arcmira-authentication.yml
+- type: ErrorCatalog
+  url: errors/arcmira-problem-types.yml
+- type: Conformance
+  url: conformance/arcmira-conformance.yml
+- type: LLMsTxt
+  url: llms/arcmira-llms.txt
+- type: AgentCard
+  url: a2a/arcmira-a2a.yml
+- type: WellKnown
+  url: well-known/arcmira-well-known.yml
+- type: Hosts
+  url: hosts/arcmira-hosts.yml
+- type: Vendors
+  url: vendors/arcmira-vendors.yml
+- type: SDKs
+  url: packages/arcmira-packages.yml
+- type: Packages
+  url: packages/arcmira-packages.yml
+- type: TermsOfService
+  url: https://arcmira.com/terms
+- type: PrivacyPolicy
+  url: https://arcmira.com/privacy
+- type: Login
+  url: https://arcmira.com/sign-in
+- type: ChangeLog
+  url: https://arcmira.com/docs/changelog
+- type: Pricing
+  url: https://arcmira.com/pricing
+- type: GettingStarted
+  url: https://arcmira.com/agent-setup
+- type: DeveloperPortal
+  url: https://api.arcmira.com`
+- type: APIReference
+  url: https://arcmira.com/docs/api-reference/search/retrieve-spoken-transcript-slices-for-one-topic
+- type: GitHubOrganization
+  url: https://github.com/arcmira
+- type: DomainSecurity
+  url: security/arcmira-domain-security.yml
 - type: Website
   url: https://arcmira.com
 - type: Documentation
   url: https://arcmira.com/docs
-x-submission-notes: 'Searches indexed YouTube/podcast transcripts for timestamped passages, people/topic
-  mentions, sponsors and ad reads, with JS/Python SDKs, CLI and an OAuth remote MCP. | Submitted twice
-  (Arcmira; Arcmira: YouTube Transcript Search) - one company. Listed on Kin call 2026-10-03.'
-x-submission-probe: root 200; docs 200; api.arcmira.com/v1/openapi.json 200 OpenAPI 3.1.0 'Arcmira API'
-  256KB; llms.txt 200; mcp server-card 200 (io.github.arcmira/arcmira); /zz-not-real-404 403 'request
-  blocked' (WAF, not soft-200); no repo api-evangelist/arcmira
+
+apis:
+- name: Arcmira API
+  description: Search YouTube transcripts via the Arcmira API.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  properties: []
+  aid: arcmira:arcmira-api
+- aid: arcmira:arcmira-api-v1-api
+  name: Arcmira API V1 API
+  description: 'Search YouTube transcripts for timestamped passages. Find mentions of people, organizations, products and topics; research channel
+
+    sponsors and recommendations; retrieve creator captions or Premium transcripts with speaker identification; and monitor entities for new mentions.
+
+    Official API guides: h'
+  humanURL: https://arcmira.com/docs/api-reference/search/retrieve-spoken-transcript-slices-for-one-topic
+  baseURL: https://api.arcmira.com
+  properties:
+  - type: OpenAPI
+    url: openapi/_original/arcmira-v1-openapi.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+
+x-submission-notes: 'Searches indexed YouTube/podcast transcripts for timestamped passages, people/topic mentions, sponsors and ad reads, with
+  JS/Python SDKs, CLI and an OAuth remote MCP. | Submitted twice (Arcmira; Arcmira: YouTube Transcript Search) - one company. Listed on Kin call
+  2026-10-03.'
+
+x-submission-probe: root 200; docs 200; api.arcmira.com/v1/openapi.json 200 OpenAPI 3.1.0 'Arcmira API' 256KB; llms.txt 200; mcp server-card 200
+  (io.github.arcmira/arcmira); /zz-not-real-404 403 'request blocked' (WAF, not soft-200); no repo api-evangelist/arcmira
+
 x-submitted-by: zeal@arcmira.com (apis.io/add, 2026-10-03)
+x-enrichment:
+  date: '2026-10-03'
+  status: enriched
+  artifacts_added: 34
+  pass: modular-v1
+  engine: identity=local,contract=local,surfaces=local,docs=local,regulatory=local

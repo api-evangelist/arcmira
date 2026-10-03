@@ -1,0 +1,25 @@
+generated: '2026-10-03'
+method: searched
+source: https://arcmira.com/docs/errors
+format: json
+problems:
+  - status: 400
+    code: invalid_query
+    title: Invalid Query
+    description: Required parameter `q` is missing.
+    remediation: Provide the required query parameter.
+  - status: 401
+    code: invalid_api_key
+    title: Invalid API Key
+    description: The API key is missing, malformed, or revoked.
+    remediation: Use a valid API key.
+  - status: 402
+    code: purchase_required
+    title: Purchase Required
+    description: Access to this resource requires a paid plan.
+    remediation: Upgrade your plan.
+  - status: 429
+    code: rate_limit_exceeded
+    title: Rate Limit Exceeded
+    description: Too many requests.
+    remediation: Wait and retry after the indicated time.

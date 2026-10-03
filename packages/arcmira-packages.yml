@@ -1,0 +1,23 @@
+generated: '2026-10-03'
+method: probed
+generator: harvest-packages.py
+source: registry metadata endpoints (registry.npmjs.org, pypi.org, rubygems.org, api.nuget.org, packagist.org, crates.io) ; github.com/arcmira
+ownership_rule: 'official: true only when the registry metadata (homepage, repository, author, URLs) names the provider''s domain (arcmira.com,
+  security/arcmira-domain-security.yml) or its accepted GitHub org (arcmira).'
+packages:
+- name: arcmira
+  registry: npm
+  url: https://www.npmjs.com/package/arcmira
+  language: JavaScript
+  official: true
+  version: 0.4.0
+  published: '2026-10-03'
+  evidence: metadata names arcmira.com
+- name: arcmira
+  registry: pypi
+  url: https://pypi.org/project/arcmira/
+  language: Python
+  official: true
+  version: 0.4.0
+  published: '2026-10-03'
+  evidence: metadata names arcmira.com

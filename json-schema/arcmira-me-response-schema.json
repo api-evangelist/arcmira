@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/arcmira/main/json-schema/arcmira-me-response-schema.json",
+  "title": "MeResponse",
+  "x-generated": "2026-10-03",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/_original/arcmira-v1-openapi.json#/components/schemas/MeResponse",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id of the user the API key belongs to."
+    },
+    "key_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id of the credential making this request: the account key id, or the OAuth token id. Never a secret. Null on a browser session."
+    },
+    "key_label": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The key name set in the dashboard, or the name of the connected OAuth client. Null when none is known."
+    },
+    "credential_kind": {
+      "type": "string",
+      "enum": [
+        "account_key",
+        "oauth",
+        "session"
+      ],
+      "description": "How the request authenticated: account_key is an arc_sk_ key, oauth is a token from a connected client, session is a signed-in browser."
+    },
+    "email_masked": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The account email with the local part masked after its first character, e.g. z***@example.com. Null when the account has none."
+    },
+    "period_resets_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO 8601 time the monthly row pool resets: 00:00 UTC on the first of next month. Null on the free plan, whose rows are a lifetime pool."
+    },
+    "tier": {
+      "type": "string",
+      "description": "Plan tier, e.g. free, pro, pro_plus, ultra, enterprise."
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Scopes granted to this API key, e.g. read, monitors:write, trackers:write, recommendations:read."
+    },
+    "rate_limit": {
+      "type": "integer",
+      "description": "Requests allowed per 60-second window for this key: 600 for enterprise, 240 for other paid tiers, 60 for free, unless a per-key override is set."
+    },
+    "recommendations_api_enabled": {
+      "type": "boolean",
+      "description": "True when the plan includes the Recommendations API (commercial intelligence endpoints)."
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "rows_used": {
+          "type": "integer",
+          "description": "Premium rows consumed this period."
+        },
+        "rows_remaining": {
+          "type": "integer",
+          "description": "Premium rows left this period."
+        },
+        "monthly_rows": {
+          "type": "integer",
+          "description": "Total premium rows included per period."
+        },
+        "current_spend_cents": {
+          "type": "integer",
+          "description": "On-demand overage spend so far this period, in US cents."
+        },
+        "credits": {
+          "type": "object",
+          "properties": {
+            "available": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "description": "Credits spendable now: plan, granted, purchased, and on-demand up to its cap. Null when nothing limits it."
+            },
+            "plan": {
+              "type": "object",
+              "properties": {
+                "credits": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Plan credits this month. Null when the plan has no limit."
+                },
+                "used": {
+                  "type": "integer",
+                  "description": "Plan credits spent this month."
+                },
+                "resets_at": {
+                  "type": "string",
+                  "description": "YYYY-MM-DD, the first day of next month (UTC), when plan credits reset."
+                }
+              },
+              "required": [
+                "credits",
+                "used",
+                "resets_at"
+              ]
+            },
+            "granted": {
+              "type": "integer",
+              "description": "Credits left in granted lots that have not expired."
+            },
+            "purchased": {
+              "type": "integer",
+              "description": "Credits left in purchased top-ups."
+            },
+            "on_demand": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "True when on-demand credits are on."
+                },
+                "cap_credits": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "The on-demand cap in credits, at $0.002 a credit. Null when uncapped or off."
+                },
+                "used": {
+                  "type": "integer",
+                  "description": "On-demand credits spent this month."
+                }
+              },
+              "required": [
+                "enabled",
+                "cap_credits",
+                "used"
+              ]
+            }
+          },
+          "required": [
+            "available",
+            "plan",
+            "granted",
+            "purchased",
+            "on_demand"
+          ],
+          "description": "The month in credits (1 credit is $0.001; a row is 4 credits). Present only when the credits ledger decides access."
+        }
+      },
+      "required": [
+        "rows_used",
+        "rows_remaining",
+        "monthly_rows",
+        "current_spend_cents"
+      ]
+    },
+    "settings": {
+      "$ref": "#/$defs/AccountSettings"
+    }
+  },
+  "required": [
+    "user_id",
+    "key_id",
+    "key_label",
+    "credential_kind",
+    "email_masked",
+    "period_resets_at",
+    "tier",
+    "scopes",
+    "rate_limit",
+    "recommendations_api_enabled",
+    "usage",
+    "settings"
+  ],
+  "$defs": {
+    "AccountSettings": {
+      "type": "object",
+      "properties": {
+        "transcripts": {
+          "$ref": "#/$defs/TranscriptSettings"
+        }
+      },
+      "required": [
+        "transcripts"
+      ],
+      "description": "Account defaults every key of this account resolves against. Set them with PATCH /v1/me/settings."
+    },
+    "TranscriptSettings": {
+      "type": "object",
+      "properties": {
+        "quality": {
+          "type": "string",
+          "enum": [
+            "captions",
+            "premium"
+          ],
+          "description": "Default transcript quality. Platform default: captions."
+        },
+        "language": {
+          "type": "string",
+          "description": "Default comma-separated caption language priority list, tried in order. Platform default: en."
+        },
+        "timestamps": {
+          "type": "boolean",
+          "description": "Default for the timestamps parameter. Platform default: true, which returns lines[]."
+        }
+      },
+      "required": [
+        "quality",
+        "language",
+        "timestamps"
+      ],
+      "description": "What a transcript request that names no parameter of its own receives."
+    }
+  }
+}

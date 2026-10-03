@@ -1,0 +1,18 @@
+generated: '2026-10-03'
+method: searched
+generator: extract-docs-artifacts.py (local)
+source: https://arcmira.com/docs/authentication.md#sign-up-from-the-api
+sources:
+- https://arcmira.com/docs/authentication.md#sign-up-from-the-api
+- https://arcmira.com/docs/authentication.md
+- https://arcmira.com/docs/authentication
+description: Authentication schemes for Arcmira API
+schemes:
+- type: http-bearer
+  name: API Key
+  evidence: 'Pass your key as a bearer token:'
+  location: header
+  header: Authorization
+  how_to_obtain: Create a key in the Dashboard → API Keys page; the key has the prefix arc_sk_ and is used as the bearer token.
+docs: https://arcmira.com/docs/authentication.md#sign-up-from-the-api
+note: 1 extracted row(s) were dropped because their quote was not on the page.

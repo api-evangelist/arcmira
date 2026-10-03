@@ -1,0 +1,668 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/arcmira/main/json-schema/arcmira-entity-momentum-response-schema.json",
+  "title": "EntityMomentumResponse",
+  "x-generated": "2026-10-03",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/_original/arcmira-v1-openapi.json#/components/schemas/EntityMomentumResponse",
+  "type": "object",
+  "properties": {
+    "entity": {
+      "$ref": "#/$defs/EntityRef"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "accelerating",
+        "flat",
+        "fading",
+        "none"
+      ],
+      "description": "Absolute delta of the last 30 days against the prior 30. none when the entity has no mentions at all."
+    },
+    "as_of": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Newest indexed media that mentions the entity. Lead with it; it is the date the verdict is true as of."
+    },
+    "coverage": {
+      "type": "string",
+      "description": "What the count measures. Always the shows we index, never the whole internet."
+    },
+    "volume": {
+      "type": "object",
+      "properties": {
+        "mentions_7d": {
+          "type": "integer"
+        },
+        "mentions_30d": {
+          "type": "integer"
+        },
+        "mentions_prior_30d": {
+          "type": "integer"
+        },
+        "delta_30d_absolute": {
+          "type": "integer"
+        },
+        "delta_30d_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Percent change against the prior 30 days. Null when the prior window was zero."
+        },
+        "mentions_90d": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer",
+          "description": "All-time mentions in the index."
+        }
+      },
+      "required": [
+        "mentions_7d",
+        "mentions_30d",
+        "mentions_prior_30d",
+        "delta_30d_absolute",
+        "delta_30d_pct",
+        "mentions_90d",
+        "total"
+      ]
+    },
+    "top_shows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "channel_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel_page": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The channel's page on arcmira.com, absolute. Null when no channel is known."
+          },
+          "mentions": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "channel_id",
+          "channel_name",
+          "channel_page",
+          "mentions"
+        ]
+      },
+      "description": "Up to five channels by mentions in the last 30 days."
+    },
+    "paid_vs_organic": {
+      "type": "object",
+      "properties": {
+        "ad_reads": {
+          "type": "integer"
+        },
+        "endorsements": {
+          "type": "integer"
+        },
+        "organic": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ad_reads",
+        "endorsements",
+        "organic"
+      ],
+      "description": "Commercial split for the last 30 days. Present only on a Pro+ plan; otherwise access names the gate."
+    },
+    "access": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "invalid_request_error",
+            "authentication_error",
+            "permission_error",
+            "quota_exceeded",
+            "rate_limit_error",
+            "not_found",
+            "conflict_error",
+            "server_error"
+          ],
+          "description": "The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling."
+        },
+        "code": {
+          "type": "string",
+          "description": "The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "no_credential",
+            "invalid",
+            "revoked"
+          ],
+          "description": "Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable."
+        },
+        "message": {
+          "type": "string",
+          "description": "One plain line. Names the fix or the unlock."
+        },
+        "param": {
+          "type": "string",
+          "description": "The query or body parameter the gate refused, when one did."
+        },
+        "gate": {
+          "type": "string",
+          "enum": [
+            "rows",
+            "key",
+            "plan",
+            "freshness",
+            "exposure_law",
+            "rate",
+            "pagination"
+          ],
+          "description": "Which boundary refused. Present on every gate error; switch on it without parsing the message."
+        },
+        "resource": {
+          "$ref": "#/$defs/ErrorResource"
+        },
+        "unlock": {
+          "type": "object",
+          "properties": {
+            "tier": {
+              "type": "string",
+              "description": "The plan that lifts the gate."
+            },
+            "url": {
+              "type": "string",
+              "description": "Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim."
+            },
+            "offer": {
+              "type": "null",
+              "description": "Reserved for the agent-discount offer. Always null today."
+            },
+            "action": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "What the call does. send_signup_code sends a verification code to an address for an account key."
+                },
+                "method": {
+                  "type": "string",
+                  "description": "HTTP method to use."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Absolute endpoint carrying its ?src= attribution. Call it verbatim."
+                }
+              },
+              "required": [
+                "kind",
+                "method",
+                "url"
+              ],
+              "description": "The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens."
+            }
+          },
+          "required": [
+            "tier",
+            "url",
+            "offer"
+          ],
+          "description": "How to lift the gate. Present when the gate has an unlock."
+        },
+        "retry_after_seconds": {
+          "type": "integer",
+          "description": "Present on rate gates. Mirrors the Retry-After header."
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "quote": {
+              "$ref": "#/$defs/RefusedQuote"
+            },
+            "existing_id": {
+              "type": "string",
+              "description": "On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "On tracker_limit, the trackers the plan holds."
+            },
+            "count": {
+              "type": "integer",
+              "description": "On tracker_limit, the trackers the account holds now."
+            }
+          },
+          "description": "Machine data the refusal carries for you to act on. Present only on the codes that name a field here."
+        },
+        "doc_url": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "code",
+        "message",
+        "doc_url",
+        "request_id"
+      ],
+      "description": "The gate that reduced this response. Present only when something was withheld; carries the same code, gate, and unlock an outright refusal would."
+    },
+    "note": {
+      "type": "string",
+      "description": "One steering sentence for the agent reading this."
+    }
+  },
+  "required": [
+    "entity",
+    "verdict",
+    "as_of",
+    "coverage",
+    "volume",
+    "top_shows",
+    "note"
+  ],
+  "$defs": {
+    "EntityRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Public entity id in the form \"ent_{n}\"."
+        },
+        "name": {
+          "type": "string",
+          "description": "Canonical entity name."
+        },
+        "type": {
+          "type": "string",
+          "description": "Entity type. Values: person (an individual), organization (a company or institution; legacy rows may read company or brand), product (a product or service), topic (a subject or theme), channel (a media source such as a YouTube channel), unknown (type was never classified)."
+        },
+        "slug": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "URL slug, the site's canonical id for every type but channel. Null when never slugged."
+        },
+        "page": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The entity's page on arcmira.com, absolute. Link the name to it when you write the entity into an answer. Null for a type the site has no page for."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type",
+        "slug",
+        "page"
+      ]
+    },
+    "ErrorResource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "media_rows"
+              ]
+            },
+            "beyond_row": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "beyond_row"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "fresh_media"
+              ]
+            },
+            "window_days": {
+              "type": "integer"
+            },
+            "cutoff": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "window_days",
+            "cutoff"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "sidebar_rows"
+              ]
+            },
+            "section": {
+              "type": "string",
+              "enum": [
+                "topics",
+                "entities"
+              ]
+            },
+            "beyond_row": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "section",
+            "beyond_row"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "counts"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "chart"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "pagination"
+              ]
+            },
+            "param": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "offset",
+                "cursor",
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "param"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "premium_transcript"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "filter"
+              ]
+            },
+            "param": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "param"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "commercial"
+              ]
+            },
+            "what": {
+              "type": "string",
+              "enum": [
+                "sponsors",
+                "recommendations",
+                "mention_details",
+                "community_review",
+                "paid_split"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "what"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "feature"
+              ]
+            },
+            "feature": {
+              "type": "string",
+              "enum": [
+                "api",
+                "export"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "feature"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "rows"
+              ]
+            },
+            "requested": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "remaining": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "requested",
+            "remaining"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "key"
+              ]
+            },
+            "scope": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "read",
+                "monitors:write",
+                "trackers:write",
+                "recommendations:read",
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "scope"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "requests"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ],
+      "description": "The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds."
+    },
+    "RefusedQuote": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/TranscriptQuote"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "charge": {
+              "type": "object",
+              "properties": {
+                "unit": {
+                  "type": "string",
+                  "enum": [
+                    "rows",
+                    "credits"
+                  ]
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "included",
+                    "on_demand",
+                    "mixed"
+                  ],
+                  "description": "Where the charge would come from at the current balance."
+                }
+              },
+              "required": [
+                "unit",
+                "amount",
+                "from"
+              ],
+              "description": "What the purchase would charge at the current balance. Absent when no current price could be read."
+            },
+            "max_on_demand_cents": {
+              "type": "integer",
+              "description": "The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance."
+            }
+          }
+        }
+      ],
+      "description": "The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required."
+    },
+    "TranscriptQuote": {
+      "type": "object",
+      "properties": {
+        "quarters": {
+          "type": "integer",
+          "description": "Number of 15-minute blocks in the video, ceiling'd, minimum 1."
+        },
+        "rows": {
+          "type": "integer",
+          "description": "Total unlock cost in rows: 75 rows per 15-minute block."
+        }
+      },
+      "required": [
+        "quarters",
+        "rows"
+      ]
+    }
+  }
+}

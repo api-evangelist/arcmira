@@ -1,0 +1,1053 @@
+{
+  "@context": {
+    "@vocab": "https://arcmira.com/schema#",
+    "schema": "https://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "arcmira": "https://arcmira.com/schema#",
+    "Error": "arcmira:Error",
+    "error": {
+      "@id": "arcmira:error"
+    },
+    "TranscriptQuote": "arcmira:TranscriptQuote",
+    "quarters": {
+      "@id": "arcmira:quarters",
+      "@type": "xsd:integer"
+    },
+    "rows": {
+      "@id": "arcmira:rows",
+      "@type": "xsd:integer"
+    },
+    "TranscriptionJob": "arcmira:TranscriptionJob",
+    "id": {
+      "@id": "arcmira:id",
+      "@type": "xsd:string"
+    },
+    "video_id": {
+      "@id": "arcmira:video_id",
+      "@type": "xsd:string"
+    },
+    "state": {
+      "@id": "arcmira:state",
+      "@type": "xsd:string"
+    },
+    "status": {
+      "@id": "arcmira:status",
+      "@type": "xsd:string"
+    },
+    "stage": {
+      "@id": "arcmira:stage",
+      "@type": "xsd:string"
+    },
+    "charge": {
+      "@id": "arcmira:charge"
+    },
+    "eta_seconds": {
+      "@id": "arcmira:eta_seconds",
+      "@type": "xsd:integer"
+    },
+    "next_poll_seconds": {
+      "@id": "arcmira:next_poll_seconds",
+      "@type": "xsd:integer"
+    },
+    "refunded": {
+      "@id": "arcmira:refunded",
+      "@type": "xsd:boolean"
+    },
+    "created_at": {
+      "@id": "arcmira:created_at",
+      "@type": "xsd:string"
+    },
+    "completed_at": {
+      "@id": "arcmira:completed_at",
+      "@type": "xsd:string"
+    },
+    "status_url": {
+      "@id": "arcmira:status_url",
+      "@type": "xsd:string"
+    },
+    "HealthResponse": "arcmira:HealthResponse",
+    "version": {
+      "@id": "arcmira:version",
+      "@type": "xsd:string"
+    },
+    "time": {
+      "@id": "arcmira:time",
+      "@type": "xsd:string"
+    },
+    "OpenApiDocument": "arcmira:OpenApiDocument",
+    "openapi": {
+      "@id": "arcmira:openapi",
+      "@type": "xsd:string"
+    },
+    "info": {
+      "@id": "arcmira:info"
+    },
+    "servers": {
+      "@id": "arcmira:servers",
+      "@container": "@list"
+    },
+    "paths": {
+      "@id": "arcmira:paths"
+    },
+    "components": {
+      "@id": "arcmira:components"
+    },
+    "MeResponse": "arcmira:MeResponse",
+    "user_id": {
+      "@id": "arcmira:user_id",
+      "@type": "xsd:string"
+    },
+    "key_id": {
+      "@id": "arcmira:key_id",
+      "@type": "xsd:string"
+    },
+    "key_label": {
+      "@id": "arcmira:key_label",
+      "@type": "xsd:string"
+    },
+    "credential_kind": {
+      "@id": "arcmira:credential_kind",
+      "@type": "xsd:string"
+    },
+    "email_masked": {
+      "@id": "arcmira:email_masked",
+      "@type": "xsd:string"
+    },
+    "period_resets_at": {
+      "@id": "arcmira:period_resets_at",
+      "@type": "xsd:string"
+    },
+    "tier": {
+      "@id": "arcmira:tier",
+      "@type": "xsd:string"
+    },
+    "scopes": {
+      "@id": "arcmira:scopes",
+      "@container": "@list"
+    },
+    "rate_limit": {
+      "@id": "arcmira:rate_limit",
+      "@type": "xsd:integer"
+    },
+    "recommendations_api_enabled": {
+      "@id": "arcmira:recommendations_api_enabled",
+      "@type": "xsd:boolean"
+    },
+    "usage": {
+      "@id": "arcmira:usage"
+    },
+    "settings": {
+      "@id": "arcmira:settings",
+      "@type": "@id"
+    },
+    "AccountSettings": "arcmira:AccountSettings",
+    "transcripts": {
+      "@id": "arcmira:transcripts",
+      "@type": "@id"
+    },
+    "TranscriptSettings": "arcmira:TranscriptSettings",
+    "quality": {
+      "@id": "arcmira:quality",
+      "@type": "xsd:string"
+    },
+    "language": {
+      "@id": "arcmira:language",
+      "@type": "xsd:string"
+    },
+    "timestamps": {
+      "@id": "arcmira:timestamps",
+      "@type": "xsd:boolean"
+    },
+    "MeSettingsResponse": "arcmira:MeSettingsResponse",
+    "SignupSentResponse": "arcmira:SignupSentResponse",
+    "next": {
+      "@id": "arcmira:next"
+    },
+    "expires_in": {
+      "@id": "arcmira:expires_in",
+      "@type": "xsd:integer"
+    },
+    "SignupVerifiedResponse": "arcmira:SignupVerifiedResponse",
+    "key": {
+      "@id": "arcmira:key",
+      "@type": "xsd:string"
+    },
+    "header": {
+      "@id": "arcmira:header",
+      "@type": "xsd:string"
+    },
+    "rows_allotted": {
+      "@id": "arcmira:rows_allotted",
+      "@type": "xsd:integer"
+    },
+    "docs_url": {
+      "@id": "arcmira:docs_url",
+      "@type": "xsd:string"
+    },
+    "EntityResolveResponse": "arcmira:EntityResolveResponse",
+    "query": {
+      "@id": "arcmira:query",
+      "@type": "xsd:string"
+    },
+    "context": {
+      "@id": "arcmira:context",
+      "@type": "xsd:string"
+    },
+    "confidence": {
+      "@id": "arcmira:confidence",
+      "@type": "xsd:string"
+    },
+    "best": {
+      "@id": "arcmira:best",
+      "@type": "@id"
+    },
+    "suggested": {
+      "@id": "arcmira:suggested",
+      "@type": "@id"
+    },
+    "ask": {
+      "@id": "arcmira:ask"
+    },
+    "candidates": {
+      "@id": "arcmira:candidates",
+      "@container": "@list"
+    },
+    "note": {
+      "@id": "arcmira:note",
+      "@type": "xsd:string"
+    },
+    "ResolveCandidate": "arcmira:ResolveCandidate",
+    "name": {
+      "@id": "arcmira:name",
+      "@type": "xsd:string"
+    },
+    "slug": {
+      "@id": "arcmira:slug",
+      "@type": "xsd:string"
+    },
+    "type": {
+      "@id": "arcmira:type",
+      "@type": "xsd:string"
+    },
+    "appearance_count": {
+      "@id": "arcmira:appearance_count",
+      "@type": "xsd:integer"
+    },
+    "youtube_channel_id": {
+      "@id": "arcmira:youtube_channel_id",
+      "@type": "xsd:string"
+    },
+    "description": {
+      "@id": "arcmira:description",
+      "@type": "xsd:string"
+    },
+    "page": {
+      "@id": "arcmira:page",
+      "@type": "xsd:string"
+    },
+    "match": {
+      "@id": "arcmira:match",
+      "@type": "xsd:string"
+    },
+    "EntityDetailResponse": "arcmira:EntityDetailResponse",
+    "entity": {
+      "@id": "arcmira:entity",
+      "@type": "@id"
+    },
+    "recommendations_summary": {
+      "@id": "arcmira:recommendations_summary",
+      "@type": "@id"
+    },
+    "Entity": "arcmira:Entity",
+    "canonical_id": {
+      "@id": "arcmira:canonical_id",
+      "@type": "xsd:string"
+    },
+    "platform": {
+      "@id": "arcmira:platform",
+      "@type": "xsd:string"
+    },
+    "url": {
+      "@id": "arcmira:url",
+      "@type": "xsd:string"
+    },
+    "image_url": {
+      "@id": "arcmira:image_url",
+      "@type": "xsd:string"
+    },
+    "image_checked_at": {
+      "@id": "arcmira:image_checked_at",
+      "@type": "xsd:string"
+    },
+    "owner_entity_id": {
+      "@id": "arcmira:owner_entity_id",
+      "@type": "xsd:string"
+    },
+    "is_canonical": {
+      "@id": "arcmira:is_canonical",
+      "@type": "xsd:boolean"
+    },
+    "merged_from_id": {
+      "@id": "arcmira:merged_from_id",
+      "@type": "xsd:string"
+    },
+    "route": {
+      "@id": "arcmira:route",
+      "@type": "xsd:string"
+    },
+    "appearances_page": {
+      "@id": "arcmira:appearances_page",
+      "@type": "xsd:string"
+    },
+    "mentions_page": {
+      "@id": "arcmira:mentions_page",
+      "@type": "xsd:string"
+    },
+    "EntityDetailRecommendationsSummary": "arcmira:EntityDetailRecommendationsSummary",
+    "total_ad_reads": {
+      "@id": "arcmira:total_ad_reads",
+      "@type": "xsd:integer"
+    },
+    "total_endorsements": {
+      "@id": "arcmira:total_endorsements",
+      "@type": "xsd:integer"
+    },
+    "unique_shows": {
+      "@id": "arcmira:unique_shows",
+      "@type": "xsd:integer"
+    },
+    "first_seen_at": {
+      "@id": "arcmira:first_seen_at",
+      "@type": "xsd:string"
+    },
+    "last_seen_at": {
+      "@id": "arcmira:last_seen_at",
+      "@type": "xsd:string"
+    },
+    "channels_as_sponsor": {
+      "@id": "arcmira:channels_as_sponsor",
+      "@type": "xsd:integer"
+    },
+    "MentionListResponse": "arcmira:MentionListResponse",
+    "mentions": {
+      "@id": "arcmira:mentions",
+      "@container": "@list"
+    },
+    "has_more": {
+      "@id": "arcmira:has_more",
+      "@type": "xsd:boolean"
+    },
+    "next_cursor": {
+      "@id": "arcmira:next_cursor",
+      "@type": "xsd:string"
+    },
+    "window": {
+      "@id": "arcmira:window",
+      "@type": "@id"
+    },
+    "unlock": {
+      "@id": "arcmira:unlock"
+    },
+    "Mention": "arcmira:Mention",
+    "media": {
+      "@id": "arcmira:media"
+    },
+    "start_seconds": {
+      "@id": "arcmira:start_seconds",
+      "@type": "xsd:integer"
+    },
+    "end_seconds": {
+      "@id": "arcmira:end_seconds",
+      "@type": "xsd:integer"
+    },
+    "is_appearance": {
+      "@id": "arcmira:is_appearance",
+      "@type": "xsd:boolean"
+    },
+    "sentiment_score": {
+      "@id": "arcmira:sentiment_score",
+      "@type": "xsd:decimal"
+    },
+    "sentiment": {
+      "@id": "arcmira:sentiment",
+      "@type": "xsd:string"
+    },
+    "referenced_url": {
+      "@id": "arcmira:referenced_url",
+      "@type": "xsd:string"
+    },
+    "referenced_platform": {
+      "@id": "arcmira:referenced_platform",
+      "@type": "xsd:string"
+    },
+    "extracted_content": {
+      "@id": "arcmira:extracted_content",
+      "@type": "xsd:string"
+    },
+    "recommendations": {
+      "@id": "arcmira:recommendations"
+    },
+    "EntityRef": "arcmira:EntityRef",
+    "RecommendationEnrichmentItem": "arcmira:RecommendationEnrichmentItem",
+    "class": {
+      "@id": "arcmira:class",
+      "@type": "xsd:string"
+    },
+    "verbatim_quote": {
+      "@id": "arcmira:verbatim_quote",
+      "@type": "xsd:string"
+    },
+    "promo_code": {
+      "@id": "arcmira:promo_code",
+      "@type": "xsd:string"
+    },
+    "offer": {
+      "@id": "arcmira:offer",
+      "@type": "xsd:string"
+    },
+    "PublicationWindow": "arcmira:PublicationWindow",
+    "after": {
+      "@id": "arcmira:after",
+      "@type": "xsd:string"
+    },
+    "before": {
+      "@id": "arcmira:before",
+      "@type": "xsd:string"
+    },
+    "RecommendationListResponse": "arcmira:RecommendationListResponse",
+    "Recommendation": "arcmira:Recommendation",
+    "speaker_role": {
+      "@id": "arcmira:speaker_role",
+      "@type": "xsd:string"
+    },
+    "conflict_status": {
+      "@id": "arcmira:conflict_status",
+      "@type": "xsd:string"
+    },
+    "resolution": {
+      "@id": "arcmira:resolution",
+      "@type": "xsd:string"
+    },
+    "FeedbackResponse": "arcmira:FeedbackResponse",
+    "feedback_id": {
+      "@id": "arcmira:feedback_id",
+      "@type": "xsd:string"
+    },
+    "applied": {
+      "@id": "arcmira:applied",
+      "@type": "xsd:integer"
+    },
+    "unchanged": {
+      "@id": "arcmira:unchanged",
+      "@type": "xsd:integer"
+    },
+    "failed": {
+      "@id": "arcmira:failed",
+      "@type": "xsd:integer"
+    },
+    "logged": {
+      "@id": "arcmira:logged",
+      "@type": "xsd:integer"
+    },
+    "corrections": {
+      "@id": "arcmira:corrections",
+      "@container": "@list"
+    },
+    "FeedbackCorrectionResult": "arcmira:FeedbackCorrectionResult",
+    "item_id": {
+      "@id": "arcmira:item_id",
+      "@type": "xsd:string"
+    },
+    "item_kind": {
+      "@id": "arcmira:item_kind",
+      "@type": "xsd:string"
+    },
+    "reason": {
+      "@id": "arcmira:reason",
+      "@type": "xsd:string"
+    },
+    "message": {
+      "@id": "arcmira:message",
+      "@type": "xsd:string"
+    },
+    "MergeSuggestionChange": "arcmira:MergeSuggestionChange",
+    "source_entity_id": {
+      "@id": "arcmira:source_entity_id",
+      "@type": "xsd:string"
+    },
+    "target_entity_id": {
+      "@id": "arcmira:target_entity_id",
+      "@type": "xsd:string"
+    },
+    "source_name": {
+      "@id": "arcmira:source_name",
+      "@type": "xsd:string"
+    },
+    "merge_into": {
+      "@id": "arcmira:merge_into",
+      "@type": "xsd:string"
+    },
+    "scope_type": {
+      "@id": "arcmira:scope_type",
+      "@type": "xsd:string"
+    },
+    "WrongEntityChange": "arcmira:WrongEntityChange",
+    "entity_id": {
+      "@id": "arcmira:entity_id",
+      "@type": "xsd:string"
+    },
+    "entity_name": {
+      "@id": "arcmira:entity_name",
+      "@type": "xsd:string"
+    },
+    "entity_type": {
+      "@id": "arcmira:entity_type",
+      "@type": "xsd:string"
+    },
+    "WrongEntityTypeChange": "arcmira:WrongEntityTypeChange",
+    "field": {
+      "@id": "arcmira:field",
+      "@type": "xsd:string"
+    },
+    "value": {
+      "@id": "arcmira:value",
+      "@type": "xsd:string"
+    },
+    "MissingResultChange": "arcmira:MissingResultChange",
+    "source_url": {
+      "@id": "arcmira:source_url",
+      "@type": "xsd:string"
+    },
+    "WrongClassificationChange": "arcmira:WrongClassificationChange",
+    "StaleMetadataChange": "arcmira:StaleMetadataChange",
+    "BadRankingChange": "arcmira:BadRankingChange",
+    "expected_rank": {
+      "@id": "arcmira:expected_rank",
+      "@type": "xsd:integer"
+    },
+    "observed_rank": {
+      "@id": "arcmira:observed_rank",
+      "@type": "xsd:integer"
+    },
+    "MissedAlertChange": "arcmira:MissedAlertChange",
+    "approximate_timestamp_seconds": {
+      "@id": "arcmira:approximate_timestamp_seconds",
+      "@type": "xsd:decimal"
+    },
+    "DeliveryIssueChange": "arcmira:DeliveryIssueChange",
+    "channel": {
+      "@id": "arcmira:channel",
+      "@type": "xsd:string"
+    },
+    "FeedbackReadbackResponse": "arcmira:FeedbackReadbackResponse",
+    "notes": {
+      "@id": "arcmira:notes",
+      "@type": "xsd:string"
+    },
+    "FeedbackReadbackCorrection": "arcmira:FeedbackReadbackCorrection",
+    "issue_type": {
+      "@id": "arcmira:issue_type",
+      "@type": "xsd:string"
+    },
+    "suggested_change": {
+      "@id": "arcmira:suggested_change"
+    },
+    "resolution_note": {
+      "@id": "arcmira:resolution_note",
+      "@type": "xsd:string"
+    },
+    "ChannelSponsorsResponse": "arcmira:ChannelSponsorsResponse",
+    "sponsors": {
+      "@id": "arcmira:sponsors",
+      "@container": "@list"
+    },
+    "meta": {
+      "@id": "arcmira:meta"
+    },
+    "access": {
+      "@id": "arcmira:access"
+    },
+    "ChannelSponsor": "arcmira:ChannelSponsor",
+    "ad_reads": {
+      "@id": "arcmira:ad_reads",
+      "@type": "xsd:integer"
+    },
+    "videos": {
+      "@id": "arcmira:videos",
+      "@type": "xsd:integer"
+    },
+    "first_seen": {
+      "@id": "arcmira:first_seen",
+      "@type": "xsd:string"
+    },
+    "last_seen": {
+      "@id": "arcmira:last_seen",
+      "@type": "xsd:string"
+    },
+    "sponsor_status": {
+      "@id": "arcmira:sponsor_status"
+    },
+    "TranscriptSearchResponse": "arcmira:TranscriptSearchResponse",
+    "limit": {
+      "@id": "arcmira:limit",
+      "@type": "xsd:integer"
+    },
+    "returned": {
+      "@id": "arcmira:returned",
+      "@type": "xsd:integer"
+    },
+    "filters": {
+      "@id": "arcmira:filters"
+    },
+    "chunks": {
+      "@id": "arcmira:chunks",
+      "@container": "@list"
+    },
+    "partial": {
+      "@id": "arcmira:partial",
+      "@type": "xsd:boolean"
+    },
+    "failed_batches": {
+      "@id": "arcmira:failed_batches",
+      "@type": "xsd:integer"
+    },
+    "as_of": {
+      "@id": "arcmira:as_of",
+      "@type": "xsd:string"
+    },
+    "search_index": {
+      "@id": "arcmira:search_index"
+    },
+    "NamedEntityRef": "arcmira:NamedEntityRef",
+    "TranscriptSearchChunk": "arcmira:TranscriptSearchChunk",
+    "channel_id": {
+      "@id": "arcmira:channel_id",
+      "@type": "xsd:string"
+    },
+    "channel_name": {
+      "@id": "arcmira:channel_name",
+      "@type": "xsd:string"
+    },
+    "channel_page": {
+      "@id": "arcmira:channel_page",
+      "@type": "xsd:string"
+    },
+    "video_title": {
+      "@id": "arcmira:video_title",
+      "@type": "xsd:string"
+    },
+    "speakers": {
+      "@id": "arcmira:speakers",
+      "@container": "@list"
+    },
+    "source": {
+      "@id": "arcmira:source",
+      "@type": "xsd:string"
+    },
+    "source_label": {
+      "@id": "arcmira:source_label",
+      "@type": "xsd:string"
+    },
+    "published_at": {
+      "@id": "arcmira:published_at",
+      "@type": "xsd:string"
+    },
+    "text": {
+      "@id": "arcmira:text",
+      "@type": "xsd:string"
+    },
+    "watch_url": {
+      "@id": "arcmira:watch_url",
+      "@type": "xsd:string"
+    },
+    "cite_line": {
+      "@id": "arcmira:cite_line",
+      "@type": "xsd:string"
+    },
+    "score": {
+      "@id": "arcmira:score",
+      "@type": "xsd:decimal"
+    },
+    "about": {
+      "@id": "arcmira:about",
+      "@container": "@list"
+    },
+    "speakers_by": {
+      "@id": "arcmira:speakers_by",
+      "@container": "@list"
+    },
+    "EntityMomentumResponse": "arcmira:EntityMomentumResponse",
+    "verdict": {
+      "@id": "arcmira:verdict",
+      "@type": "xsd:string"
+    },
+    "coverage": {
+      "@id": "arcmira:coverage",
+      "@type": "xsd:string"
+    },
+    "volume": {
+      "@id": "arcmira:volume"
+    },
+    "top_shows": {
+      "@id": "arcmira:top_shows",
+      "@container": "@list"
+    },
+    "paid_vs_organic": {
+      "@id": "arcmira:paid_vs_organic"
+    },
+    "ChannelCoverageResponse": "arcmira:ChannelCoverageResponse",
+    "ChannelVideosResponse": "arcmira:ChannelVideosResponse",
+    "episodes": {
+      "@id": "arcmira:episodes",
+      "@container": "@list"
+    },
+    "indexed_through": {
+      "@id": "arcmira:indexed_through",
+      "@type": "xsd:string"
+    },
+    "index_age_days": {
+      "@id": "arcmira:index_age_days",
+      "@type": "xsd:integer"
+    },
+    "MentionCountsResponse": "arcmira:MentionCountsResponse",
+    "mode": {
+      "@id": "arcmira:mode",
+      "@type": "xsd:string"
+    },
+    "channel_ids": {
+      "@id": "arcmira:channel_ids",
+      "@container": "@list"
+    },
+    "video_ids": {
+      "@id": "arcmira:video_ids",
+      "@container": "@list"
+    },
+    "shared": {
+      "@id": "arcmira:shared",
+      "@container": "@list"
+    },
+    "MonitorListResponse": "arcmira:MonitorListResponse",
+    "monitors": {
+      "@id": "arcmira:monitors",
+      "@container": "@list"
+    },
+    "Monitor": "arcmira:Monitor",
+    "paused": {
+      "@id": "arcmira:paused",
+      "@type": "xsd:boolean"
+    },
+    "notify_emails": {
+      "@id": "arcmira:notify_emails",
+      "@container": "@list"
+    },
+    "email_recipients": {
+      "@id": "arcmira:email_recipients",
+      "@container": "@list"
+    },
+    "notify_frequency": {
+      "@id": "arcmira:notify_frequency",
+      "@type": "xsd:string"
+    },
+    "digest_day": {
+      "@id": "arcmira:digest_day",
+      "@type": "xsd:string"
+    },
+    "digest_time": {
+      "@id": "arcmira:digest_time",
+      "@type": "xsd:string"
+    },
+    "notify_webhook": {
+      "@id": "arcmira:notify_webhook",
+      "@type": "xsd:boolean"
+    },
+    "webhook_url": {
+      "@id": "arcmira:webhook_url",
+      "@type": "xsd:string"
+    },
+    "webhook_secret_set": {
+      "@id": "arcmira:webhook_secret_set",
+      "@type": "xsd:boolean"
+    },
+    "webhook_secret_hint": {
+      "@id": "arcmira:webhook_secret_hint",
+      "@type": "xsd:string"
+    },
+    "webhook_failures": {
+      "@id": "arcmira:webhook_failures",
+      "@type": "xsd:integer"
+    },
+    "webhook_disabled_at": {
+      "@id": "arcmira:webhook_disabled_at",
+      "@type": "xsd:string"
+    },
+    "webhook_disabled_reason": {
+      "@id": "arcmira:webhook_disabled_reason",
+      "@type": "xsd:string"
+    },
+    "notify_slack": {
+      "@id": "arcmira:notify_slack",
+      "@type": "xsd:boolean"
+    },
+    "slack_integration_id": {
+      "@id": "arcmira:slack_integration_id",
+      "@type": "xsd:string"
+    },
+    "slack_channel_id": {
+      "@id": "arcmira:slack_channel_id",
+      "@type": "xsd:string"
+    },
+    "updated_at": {
+      "@id": "arcmira:updated_at",
+      "@type": "xsd:string"
+    },
+    "team": {
+      "@id": "arcmira:team"
+    },
+    "muted": {
+      "@id": "arcmira:muted",
+      "@type": "xsd:boolean"
+    },
+    "MonitorMutationResponse": "arcmira:MonitorMutationResponse",
+    "monitor": {
+      "@id": "arcmira:monitor"
+    },
+    "WebhookSecretRotateResponse": "arcmira:WebhookSecretRotateResponse",
+    "webhook_secret": {
+      "@id": "arcmira:webhook_secret",
+      "@type": "xsd:string"
+    },
+    "previous_secret_expires_at": {
+      "@id": "arcmira:previous_secret_expires_at",
+      "@type": "xsd:string"
+    },
+    "MonitorDeleteResponse": "arcmira:MonitorDeleteResponse",
+    "trackers_deleted": {
+      "@id": "arcmira:trackers_deleted",
+      "@type": "xsd:integer"
+    },
+    "MonitorTrackersResponse": "arcmira:MonitorTrackersResponse",
+    "trackers": {
+      "@id": "arcmira:trackers",
+      "@container": "@list"
+    },
+    "count": {
+      "@id": "arcmira:count",
+      "@type": "xsd:integer"
+    },
+    "AlertListResponse": "arcmira:AlertListResponse",
+    "alerts": {
+      "@id": "arcmira:alerts",
+      "@container": "@list"
+    },
+    "Alert": "arcmira:Alert",
+    "tracker_id": {
+      "@id": "arcmira:tracker_id",
+      "@type": "xsd:string"
+    },
+    "monitor_id": {
+      "@id": "arcmira:monitor_id",
+      "@type": "xsd:string"
+    },
+    "mention_id": {
+      "@id": "arcmira:mention_id",
+      "@type": "xsd:string"
+    },
+    "excerpt_id": {
+      "@id": "arcmira:excerpt_id",
+      "@type": "xsd:string"
+    },
+    "evidence_kind": {
+      "@id": "arcmira:evidence_kind",
+      "@type": "xsd:string"
+    },
+    "final_status": {
+      "@id": "arcmira:final_status",
+      "@type": "xsd:string"
+    },
+    "error_message": {
+      "@id": "arcmira:error_message",
+      "@type": "xsd:string"
+    },
+    "scheduled_at": {
+      "@id": "arcmira:scheduled_at",
+      "@type": "xsd:string"
+    },
+    "sent_at": {
+      "@id": "arcmira:sent_at",
+      "@type": "xsd:string"
+    },
+    "tracker": {
+      "@id": "arcmira:tracker"
+    },
+    "MonitorAddTrackersResponse": "arcmira:MonitorAddTrackersResponse",
+    "attached_count": {
+      "@id": "arcmira:attached_count",
+      "@type": "xsd:integer"
+    },
+    "MonitorAddEntitiesResponse": "arcmira:MonitorAddEntitiesResponse",
+    "results": {
+      "@id": "arcmira:results",
+      "@container": "@list"
+    },
+    "MonitorEntityResult": "arcmira:MonitorEntityResult",
+    "canonical_entity_id": {
+      "@id": "arcmira:canonical_entity_id",
+      "@type": "xsd:string"
+    },
+    "created": {
+      "@id": "arcmira:created",
+      "@type": "xsd:boolean"
+    },
+    "attached": {
+      "@id": "arcmira:attached",
+      "@type": "xsd:boolean"
+    },
+    "current_monitor_id": {
+      "@id": "arcmira:current_monitor_id",
+      "@type": "xsd:string"
+    },
+    "SlackIntegrationListResponse": "arcmira:SlackIntegrationListResponse",
+    "integrations": {
+      "@id": "arcmira:integrations",
+      "@container": "@list"
+    },
+    "TrackerListResponse": "arcmira:TrackerListResponse",
+    "Tracker": "arcmira:Tracker",
+    "display_name": {
+      "@id": "arcmira:display_name",
+      "@type": "xsd:string"
+    },
+    "notify_email": {
+      "@id": "arcmira:notify_email",
+      "@type": "xsd:boolean"
+    },
+    "paused_at": {
+      "@id": "arcmira:paused_at",
+      "@type": "xsd:string"
+    },
+    "last_notified_at": {
+      "@id": "arcmira:last_notified_at",
+      "@type": "xsd:string"
+    },
+    "email_delivery_count": {
+      "@id": "arcmira:email_delivery_count",
+      "@type": "xsd:integer"
+    },
+    "webhook_delivery_count": {
+      "@id": "arcmira:webhook_delivery_count",
+      "@type": "xsd:integer"
+    },
+    "slack_delivery_count": {
+      "@id": "arcmira:slack_delivery_count",
+      "@type": "xsd:integer"
+    },
+    "TrackerMutationResponse": "arcmira:TrackerMutationResponse",
+    "MessageResponse": "arcmira:MessageResponse",
+    "TranscriptResponse": "arcmira:TranscriptResponse",
+    "video": {
+      "@id": "arcmira:video",
+      "@type": "@id"
+    },
+    "languages": {
+      "@id": "arcmira:languages",
+      "@container": "@list"
+    },
+    "lines": {
+      "@id": "arcmira:lines",
+      "@container": "@list"
+    },
+    "paragraphs": {
+      "@id": "arcmira:paragraphs",
+      "@container": "@list"
+    },
+    "revision": {
+      "@id": "arcmira:revision",
+      "@type": "xsd:string"
+    },
+    "range": {
+      "@id": "arcmira:range"
+    },
+    "rows_billed": {
+      "@id": "arcmira:rows_billed",
+      "@type": "xsd:integer"
+    },
+    "premium_job": {
+      "@id": "arcmira:premium_job"
+    },
+    "TranscriptVideo": "arcmira:TranscriptVideo",
+    "title": {
+      "@id": "arcmira:title",
+      "@type": "xsd:string"
+    },
+    "duration_seconds": {
+      "@id": "arcmira:duration_seconds",
+      "@type": "xsd:decimal"
+    },
+    "CaptionTrack": "arcmira:CaptionTrack",
+    "code": {
+      "@id": "arcmira:code",
+      "@type": "xsd:string"
+    },
+    "generated": {
+      "@id": "arcmira:generated",
+      "@type": "xsd:boolean"
+    },
+    "TranscriptFailed": "arcmira:TranscriptFailed",
+    "job": {
+      "@id": "arcmira:job"
+    },
+    "last_attempt": {
+      "@id": "arcmira:last_attempt"
+    },
+    "TranscriptPending": "arcmira:TranscriptPending",
+    "TranscriptPurchaseQuote": "arcmira:TranscriptPurchaseQuote",
+    "billing_scope": {
+      "@id": "arcmira:billing_scope",
+      "@type": "xsd:string"
+    },
+    "owned": {
+      "@id": "arcmira:owned",
+      "@type": "xsd:boolean"
+    },
+    "eligible": {
+      "@id": "arcmira:eligible",
+      "@type": "xsd:boolean"
+    },
+    "upgrade": {
+      "@id": "arcmira:upgrade"
+    },
+    "quote": {
+      "@id": "arcmira:quote",
+      "@type": "@id"
+    },
+    "credits_per_row": {
+      "@id": "arcmira:credits_per_row",
+      "@type": "xsd:decimal"
+    },
+    "max_on_demand_cents": {
+      "@id": "arcmira:max_on_demand_cents",
+      "@type": "xsd:decimal"
+    },
+    "on_demand_cents_per_unit": {
+      "@id": "arcmira:on_demand_cents_per_unit",
+      "@type": "xsd:decimal"
+    },
+    "refund_policy": {
+      "@id": "arcmira:refund_policy",
+      "@type": "xsd:string"
+    },
+    "TranscriptionListResponse": "arcmira:TranscriptionListResponse",
+    "requests": {
+      "@id": "arcmira:requests",
+      "@container": "@list"
+    }
+  },
+  "@type": "schema:Dataset",
+  "schema:name": "Arcmira API JSON-LD context",
+  "schema:description": "A JSON-LD @context for the objects Arcmira's own API contract declares: one class per component schema, one property per declared field, typed from the contract. Derived by script (derive-json-ld.py, 2026-10-03) from openapi/_original/arcmira-v1-openapi.json.",
+  "dcterms:created": "2026-10-03",
+  "dcterms:source": [
+    "openapi/_original/arcmira-v1-openapi.json"
+  ]
+}

@@ -1,0 +1,83 @@
+generated: '2026-10-03'
+method: searched
+generator: extract-docs-artifacts.py (local)
+source: https://arcmira.com/docs/changelog.md
+sources:
+- https://arcmira.com/docs/changelog.md
+- https://arcmira.com/docs/changelog
+- https://arcmira.com/docs/transcripts-for-coding-agents
+entries:
+- breaking: true
+  highlights:
+  - '**Breaking change:** `GET /v1/team/members`'
+  date: '2026-10-02'
+- breaking: true
+  highlights:
+  - '**Breaking change:** every transcription request is now one snake_case Job: id , video_id , state , status , stage , charge ( { unit: "credits",
+    amount, from } ), eta_seconds and next_poll_seconds while in flight, error , refunded , created_at , completed_at , and an absolute status_url
+    .'
+  date: '2026-10-02'
+- breaking: false
+  highlights:
+  - Mastra documentation connection (2026-10-03)
+  - The agent framework guide now includes a Mastra example that searches API docs without an Arcmira key.
+  - Live discovery, search and file reads passed with `@mastra/mcp` 2.1.0 and `@mastra/core` 1.71.0.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - SDK search examples and Deno (2026-10-03)
+  - The Libraries guide now uses the current sponsored filter, snake_case result fields and response window.
+  - A Deno example imports the existing npm SDK without a separate package.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - MCP client examples corrected (2026-10-03)
+  - The MCP client guide now uses the current search and recommendations routes, snake_case result fields and monitor settings.
+  - The Premium wait budget is documented as 22 seconds.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - LangChain documentation connection (2026-10-03)
+  - The agent framework guide now includes a LangChain example that searches API documentation without an Arcmira key.
+  - Live discovery, search and file reads passed with LangChain 1.4.2.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - API quickstart search description (2026-10-03)
+  - The quickstart now identifies YouTube transcript search in its page title and describes timestamped results, speaker appearances, sponsors,
+    and client options.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - MCP tool effect reference corrected (2026-10-03)
+  - Only `arcmira_describe` is read-only.
+  - Both execute tools can start an explicit Premium purchase, and feedback calls create separate records.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - API docs in agent frameworks (2026-10-03)
+  - The documentation MCP guide now includes Vercel AI SDK, Pydantic AI and Google ADK configurations.
+  - All three expose only docs search and read-only documentation queries.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - Agent discovery and monitor examples (2026-10-03)
+  - The developer markdown now names the four current MCP tools and links the API docs first.
+  - Monitor examples use snake_case HTTP fields and `limit` for alert history.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - Current search examples and MCP metadata (2026-10-03)
+  - The quick start, Search guides, and published Agent Skill now use `GET /v1/search` for transcript passages and `GET /v1/entities/resolve`
+    for names.
+  - MCP 0.10.1 corrects tool effect annotations and updates its directory title and primary API documentation link.
+  date: '2026-10-03'
+- breaking: false
+  highlights:
+  - Premium transcript clients (2026-10-03)
+  - The transcript guides, MCP reference, and SDK examples now use the released purchase-and-read GET.
+  - Explicit Premium requests can spend included credits and on-demand money within the account budget.
+  date: '2026-10-03'
+current_version: '2026-10-03'
+note: Versioning scheme is date-based (YYYY-MM-DD).
+docs: https://arcmira.com/docs/changelog.md

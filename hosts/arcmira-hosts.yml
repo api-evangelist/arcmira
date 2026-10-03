@@ -1,0 +1,93 @@
+generated: '2026-10-03'
+method: derived
+source: the pre-flight dossier, apis.yml pointers, spec servers, well-known, vendors -- nothing fetched here
+generator: derive-hosts.py
+summary:
+  hosts: 5
+  own: 3
+  other_domain: 1
+  platform: 1
+  roles:
+  - api
+  - docs
+  - portal
+  - source
+  - website
+hosts:
+- host: api.arcmira.com
+  found_by:
+  - apis[]
+  - probed
+  - site-links
+  - docs-index
+  - spec-found
+  - contract-discovery
+  - well-known
+  types: []
+  serves:
+  - api
+  - docs
+  - spec
+  registrable_domain: arcmira.com
+  role: api
+  relation: own
+- host: api.arcmira.com`
+  found_by:
+  - pointer
+  types:
+  - DeveloperPortal
+  serves: []
+  registrable_domain: arcmira.com`
+  role: portal
+  relation: other-domain
+- host: arcmira.com
+  found_by:
+  - pointer
+  - apis[]
+  - probed
+  - docs-index
+  - contract-discovery
+  - well-known
+  - vendor-detect
+  types:
+  - TermsOfService
+  - PrivacyPolicy
+  - Login
+  - ChangeLog
+  - Pricing
+  - GettingStarted
+  - APIReference
+  - Website
+  - Documentation
+  serves:
+  - docs
+  - cdn
+  vendor: cloudflare
+  registrable_domain: arcmira.com
+  role: website
+  relation: own
+- host: docs.arcmira.com
+  found_by:
+  - probed
+  - site-links
+  - namespace-probe
+  - contract-discovery
+  - well-known
+  types: []
+  serves: []
+  title: YouTube transcript search API - Arcmira API
+  status: 200
+  registrable_domain: arcmira.com
+  role: docs
+  relation: own
+- host: github.com
+  found_by:
+  - pointer
+  - docs-index
+  types:
+  - GitHubOrganization
+  serves:
+  - docs
+  registrable_domain: github.com
+  role: source
+  relation: platform

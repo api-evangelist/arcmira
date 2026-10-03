@@ -1,0 +1,816 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/arcmira/main/json-schema/arcmira-transcript-search-response-schema.json",
+  "title": "TranscriptSearchResponse",
+  "x-generated": "2026-10-03",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptSearchResponse",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "The q parameter echoed back."
+    },
+    "limit": {
+      "type": "integer",
+      "description": "The limit applied."
+    },
+    "returned": {
+      "type": "integer",
+      "description": "Chunks returned."
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "channel_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Channel ids the search was scoped to, after entity_ids were expanded."
+        },
+        "entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Exact explicit entity_ids accepted for this search. Every id was resolved; an unknown id is refused."
+        },
+        "about": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NamedEntityRef"
+          },
+          "description": "The about ids, each with its name and type."
+        },
+        "by": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NamedEntityRef"
+          },
+          "description": "The by ids, each with its name and type."
+        },
+        "kind": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "sponsored",
+              "organic",
+              "mention"
+            ]
+          },
+          "description": "The passage classes applied."
+        }
+      },
+      "required": [
+        "channel_ids",
+        "entity_ids",
+        "about",
+        "by",
+        "kind"
+      ]
+    },
+    "window": {
+      "$ref": "#/$defs/PublicationWindow"
+    },
+    "chunks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TranscriptSearchChunk"
+      },
+      "description": "Ranked slices. Empty means no hit in the shows we index; say so, never search the open web."
+    },
+    "partial": {
+      "type": "boolean",
+      "description": "True when some retrieval batches failed and these chunks are what survived."
+    },
+    "failed_batches": {
+      "type": "integer",
+      "description": "How many batches failed when partial is true."
+    },
+    "as_of": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Newest published_at among the chunks. Null when there are none."
+    },
+    "search_index": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "live",
+            "catching_up",
+            "unknown"
+          ],
+          "description": "Whether every indexed transcript is searchable. catching_up means older transcripts are still being added; note says so when the asked window reaches them."
+        },
+        "missing_before": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "While catching up, transcripts published before this date may be missing from search."
+        }
+      },
+      "required": [
+        "state",
+        "missing_before"
+      ],
+      "description": "Health of the search index behind these results. Catalog routes are unaffected by it."
+    },
+    "access": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "invalid_request_error",
+            "authentication_error",
+            "permission_error",
+            "quota_exceeded",
+            "rate_limit_error",
+            "not_found",
+            "conflict_error",
+            "server_error"
+          ],
+          "description": "The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling."
+        },
+        "code": {
+          "type": "string",
+          "description": "The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "no_credential",
+            "invalid",
+            "revoked"
+          ],
+          "description": "Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable."
+        },
+        "message": {
+          "type": "string",
+          "description": "One plain line. Names the fix or the unlock."
+        },
+        "param": {
+          "type": "string",
+          "description": "The query or body parameter the gate refused, when one did."
+        },
+        "gate": {
+          "type": "string",
+          "enum": [
+            "rows",
+            "key",
+            "plan",
+            "freshness",
+            "exposure_law",
+            "rate",
+            "pagination"
+          ],
+          "description": "Which boundary refused. Present on every gate error; switch on it without parsing the message."
+        },
+        "resource": {
+          "$ref": "#/$defs/ErrorResource"
+        },
+        "unlock": {
+          "type": "object",
+          "properties": {
+            "tier": {
+              "type": "string",
+              "description": "The plan that lifts the gate."
+            },
+            "url": {
+              "type": "string",
+              "description": "Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim."
+            },
+            "offer": {
+              "type": "null",
+              "description": "Reserved for the agent-discount offer. Always null today."
+            },
+            "action": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "What the call does. send_signup_code sends a verification code to an address for an account key."
+                },
+                "method": {
+                  "type": "string",
+                  "description": "HTTP method to use."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Absolute endpoint carrying its ?src= attribution. Call it verbatim."
+                }
+              },
+              "required": [
+                "kind",
+                "method",
+                "url"
+              ],
+              "description": "The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens."
+            }
+          },
+          "required": [
+            "tier",
+            "url",
+            "offer"
+          ],
+          "description": "How to lift the gate. Present when the gate has an unlock."
+        },
+        "retry_after_seconds": {
+          "type": "integer",
+          "description": "Present on rate gates. Mirrors the Retry-After header."
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "quote": {
+              "$ref": "#/$defs/RefusedQuote"
+            },
+            "existing_id": {
+              "type": "string",
+              "description": "On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "On tracker_limit, the trackers the plan holds."
+            },
+            "count": {
+              "type": "integer",
+              "description": "On tracker_limit, the trackers the account holds now."
+            }
+          },
+          "description": "Machine data the refusal carries for you to act on. Present only on the codes that name a field here."
+        },
+        "doc_url": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "code",
+        "message",
+        "doc_url",
+        "request_id"
+      ],
+      "description": "The gate that reduced this response. Present only when something was withheld; carries the same code, gate, and unlock an outright refusal would."
+    },
+    "unlock": {
+      "type": "object",
+      "properties": {
+        "tier": {
+          "type": "string",
+          "description": "The plan that lifts the freshness gate."
+        },
+        "url": {
+          "type": "string",
+          "description": "Where to start that plan."
+        }
+      },
+      "required": [
+        "tier",
+        "url"
+      ],
+      "description": "Present when your plan's freshness gate cut the window and nothing older matched; note says so."
+    },
+    "note": {
+      "type": "string",
+      "description": "One steering sentence for the agent reading this."
+    }
+  },
+  "required": [
+    "query",
+    "limit",
+    "returned",
+    "filters",
+    "window",
+    "chunks",
+    "as_of",
+    "search_index",
+    "note"
+  ],
+  "$defs": {
+    "ErrorResource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "media_rows"
+              ]
+            },
+            "beyond_row": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "beyond_row"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "fresh_media"
+              ]
+            },
+            "window_days": {
+              "type": "integer"
+            },
+            "cutoff": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "window_days",
+            "cutoff"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "sidebar_rows"
+              ]
+            },
+            "section": {
+              "type": "string",
+              "enum": [
+                "topics",
+                "entities"
+              ]
+            },
+            "beyond_row": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "section",
+            "beyond_row"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "counts"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "chart"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "pagination"
+              ]
+            },
+            "param": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "offset",
+                "cursor",
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "param"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "premium_transcript"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "filter"
+              ]
+            },
+            "param": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "param"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "commercial"
+              ]
+            },
+            "what": {
+              "type": "string",
+              "enum": [
+                "sponsors",
+                "recommendations",
+                "mention_details",
+                "community_review",
+                "paid_split"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "what"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "feature"
+              ]
+            },
+            "feature": {
+              "type": "string",
+              "enum": [
+                "api",
+                "export"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "feature"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "rows"
+              ]
+            },
+            "requested": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "remaining": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "requested",
+            "remaining"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "key"
+              ]
+            },
+            "scope": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "read",
+                "monitors:write",
+                "trackers:write",
+                "recommendations:read",
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "scope"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "requests"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ],
+      "description": "The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds."
+    },
+    "NamedEntityRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Public entity id, ent_{n}."
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The entity name. Null when the id no longer resolves."
+        },
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Entity type. Values: person (an individual), organization (a company or institution; legacy rows may read company or brand), product (a product or service), topic (a subject or theme), channel (a media source such as a YouTube channel), unknown (type was never classified)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type"
+      ]
+    },
+    "PublicationWindow": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Inclusive start as an ISO instant. Null when the window has no start."
+        },
+        "before": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window."
+        }
+      },
+      "required": [
+        "after",
+        "before"
+      ],
+      "description": "The publication window the answer covers, [after, before) in UTC, normalized from after and before."
+    },
+    "RefusedQuote": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/TranscriptQuote"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "charge": {
+              "type": "object",
+              "properties": {
+                "unit": {
+                  "type": "string",
+                  "enum": [
+                    "rows",
+                    "credits"
+                  ]
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "included",
+                    "on_demand",
+                    "mixed"
+                  ],
+                  "description": "Where the charge would come from at the current balance."
+                }
+              },
+              "required": [
+                "unit",
+                "amount",
+                "from"
+              ],
+              "description": "What the purchase would charge at the current balance. Absent when no current price could be read."
+            },
+            "max_on_demand_cents": {
+              "type": "integer",
+              "description": "The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance."
+            }
+          }
+        }
+      ],
+      "description": "The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required."
+    },
+    "TranscriptQuote": {
+      "type": "object",
+      "properties": {
+        "quarters": {
+          "type": "integer",
+          "description": "Number of 15-minute blocks in the video, ceiling'd, minimum 1."
+        },
+        "rows": {
+          "type": "integer",
+          "description": "Total unlock cost in rows: 75 rows per 15-minute block."
+        }
+      },
+      "required": [
+        "quarters",
+        "rows"
+      ]
+    },
+    "TranscriptSearchChunk": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Search index chunk id. Opaque."
+        },
+        "video_id": {
+          "type": "string",
+          "description": "YouTube video id (11 characters)."
+        },
+        "channel_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "YouTube channel id of the source channel."
+        },
+        "channel_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Source channel name."
+        },
+        "channel_page": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The channel's page on arcmira.com, absolute. Null when no channel is known."
+        },
+        "video_title": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Video title."
+        },
+        "speakers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Speaker names identified on this slice, when known."
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Transcript source class: arcmira_premium, creator_captions, or third_party_quick."
+        },
+        "source_label": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Human label for source."
+        },
+        "published_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Video publish timestamp. Cite it as the date of the quote."
+        },
+        "text": {
+          "type": "string",
+          "description": "The spoken slice. Search results include text on every plan within the permitted publication-date window."
+        },
+        "start_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Offset of the slice in the video, in seconds."
+        },
+        "watch_url": {
+          "type": "string",
+          "description": "Site-relative watch URL with the timestamp, e.g. /watch?v=...&t=4787."
+        },
+        "cite_line": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "A ready citation line: title, clock, channel, date."
+        },
+        "score": {
+          "type": "number",
+          "description": "Retrieval score. Higher is a closer match. Not comparable across calls."
+        },
+        "about": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NamedEntityRef"
+          },
+          "description": "Entities the passage is tagged about (excerpt pins, exact-name mentions, ad verdicts). Present on passages served from the spoken index."
+        },
+        "speakers_by": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NamedEntityRef"
+          },
+          "description": "The people speaking in the passage, as ids with names. Present on passages served from the spoken index."
+        }
+      },
+      "required": [
+        "id",
+        "video_id",
+        "channel_id",
+        "source",
+        "published_at",
+        "text",
+        "start_seconds",
+        "watch_url",
+        "score"
+      ]
+    }
+  }
+}

@@ -1,0 +1,49 @@
+generated: '2026-10-03'
+method: searched
+generator: extract-docs-artifacts.py (local)
+source: https://arcmira.com/docs/libraries.md
+sources:
+- https://arcmira.com/docs/libraries.md
+- https://github.com/arcmira/arcmira
+- https://arcmira.com/docs/libraries
+install:
+- method: npm
+  command: npm install arcmira
+- method: npx
+  command: npx arcmira --help
+commands:
+- group: login
+  commands:
+  - npx arcmira login you@example.com
+- group: resolve
+  commands:
+  - npx arcmira resolve Ramp
+  - npx arcmira resolve Mercury --context "the startup bank"
+- group: search
+  commands:
+  - npx arcmira search "corporate cards" --about ent_14 --kind sponsored
+- group: mentions
+  commands:
+  - npx arcmira mentions --entity ent_14 --channel UC-DRzaGnL_vtBUpCFH5M0tg
+- group: momentum
+  commands:
+  - npx arcmira momentum Ramp Brex
+- group: sponsors
+  commands:
+  - npx arcmira sponsors TBPN --status active
+- group: recommendations
+  commands:
+  - npx arcmira recommendations ent_14 --kind organic
+- group: transcripts
+  commands:
+  - npx arcmira transcripts get https://www.youtube.com/watch?v=CusJwCsDHHM --start 0 --end 120
+  - npx arcmira transcripts get CusJwCsDHHM --quality premium
+- group: status
+  commands:
+  - npx arcmira status UC-DRzaGnL_vtBUpCFH5M0tg
+- group: setup
+  commands:
+  - npx arcmira setup --dry-run
+  - npx arcmira setup
+binary: arcmira
+docs: https://arcmira.com/docs/libraries.md

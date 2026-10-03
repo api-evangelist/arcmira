@@ -1,0 +1,388 @@
+generated: '2026-10-03'
+method: derived
+generator: derive-vocabulary.py
+source: openapi/_original/arcmira-v1-openapi.json
+vocabulary:
+  name: Arcmira Domain Vocabulary
+  description: 'Terms declared by Arcmira''s own API contract: its resource groups, objects and enumerations, with the contract''s definitions.
+    Derived, not authored.'
+  version: '2026-10-03'
+  terms:
+  - term: Error
+    definition: 'Object declared by the contract with fields: error.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/Error
+  - term: ErrorResource
+    definition: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per
+      kind; see https://arcmira.com/docs/errors#resource-kinds.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/ErrorResource
+  - term: RefusedQuote
+    definition: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/RefusedQuote
+  - term: TranscriptQuote
+    definition: 'Object declared by the contract with fields: quarters, rows.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptQuote
+  - term: TranscriptionJob
+    definition: A Premium transcript purchase with its processing state, charge and URL for reading the transcript again.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptionJob
+  - term: HealthResponse
+    definition: 'Object declared by the contract with fields: status, version, time.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/HealthResponse
+  - term: OpenApiDocument
+    definition: This OpenAPI 3.1 document, the one you are reading.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/OpenApiDocument
+  - term: MeResponse
+    definition: 'Object declared by the contract with fields: user_id, key_id, key_label, credential_kind, email_masked, period_resets_at, tier,
+      scopes, rate_limit, recommendations_api_enabled, usage, settings.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MeResponse
+  - term: AccountSettings
+    definition: Account defaults every key of this account resolves against. Set them with PATCH /v1/me/settings.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/AccountSettings
+  - term: TranscriptSettings
+    definition: What a transcript request that names no parameter of its own receives.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptSettings
+  - term: MeSettingsResponse
+    definition: 'Object declared by the contract with fields: settings.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MeSettingsResponse
+  - term: SignupSentResponse
+    definition: 'Object declared by the contract with fields: next, expires_in.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/SignupSentResponse
+  - term: SignupVerifiedResponse
+    definition: 'Object declared by the contract with fields: key, key_id, header, scopes, tier, rows_allotted, next, docs_url.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/SignupVerifiedResponse
+  - term: EntityResolveResponse
+    definition: 'Object declared by the contract with fields: query, context, confidence, best, suggested, ask, candidates, note.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/EntityResolveResponse
+  - term: ResolveCandidate
+    definition: The one row q means. Set on exact and single_fuzzy only. Name it in the answer.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/ResolveCandidate
+  - term: ResolveSuggestion
+    definition: Set when best is null but one row stands out, with the reason and evidence. Use it and tell the user you assumed it.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/ResolveSuggestion
+  - term: EntityDetailResponse
+    definition: 'Object declared by the contract with fields: entity, recommendations_summary.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/EntityDetailResponse
+  - term: Entity
+    definition: 'Object declared by the contract with fields: id, canonical_id, name, type, platform, url, image_url, image_checked_at, appearance_count,
+      owner_entity_id, is_canonical, merged_from_id. (5 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/Entity
+  - term: EntityDetailRecommendationsSummary
+    definition: Commercial-intelligence rollup. Only present for organization and product entities when the caller has Recommendations API access
+      (a Pro+ plan) and a brand profile exists.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/EntityDetailRecommendationsSummary
+  - term: MentionListResponse
+    definition: 'Object declared by the contract with fields: mentions, has_more, next_cursor, entity, window, note, unlock.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MentionListResponse
+  - term: Mention
+    definition: 'Object declared by the contract with fields: id, entity, media, start_seconds, end_seconds, is_appearance, description, confidence,
+      sentiment_score, sentiment, referenced_url, referenced_platform. (2 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/Mention
+  - term: EntityRef
+    definition: 'Object declared by the contract with fields: id, name, type, slug, page.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/EntityRef
+  - term: RecommendationEnrichmentItem
+    definition: 'Object declared by the contract with fields: id, class, verbatim_quote, promo_code, offer, confidence, start_seconds, end_seconds.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/RecommendationEnrichmentItem
+  - term: PublicationWindow
+    definition: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/PublicationWindow
+  - term: RecommendationListResponse
+    definition: 'Object declared by the contract with fields: recommendations, has_more, next_cursor, entity, window.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/RecommendationListResponse
+  - term: Recommendation
+    definition: 'Object declared by the contract with fields: id, class, entity, media, start_seconds, end_seconds, verbatim_quote, promo_code,
+      offer, sentiment, sentiment_score, confidence. (3 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/Recommendation
+  - term: FeedbackResponse
+    definition: 'Object declared by the contract with fields: feedback_id, type, query, applied, unchanged, failed, logged, corrections.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/FeedbackResponse
+  - term: FeedbackCorrectionResult
+    definition: 'Object declared by the contract with fields: item_id, item_kind, status, reason, message.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/FeedbackCorrectionResult
+  - term: MergeSuggestionChange
+    definition: 'For issue_type merge_suggestion (and duplicate_entity): the canonical merge you are proposing. Provide ids when you have them,
+      names otherwise.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MergeSuggestionChange
+  - term: WrongEntityChange
+    definition: 'For issue_type wrong_entity (and wrong_person): the entity the row should have been attributed to.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/WrongEntityChange
+  - term: WrongEntityTypeChange
+    definition: 'For issue_type wrong_entity_type: { "field": "type", "value": "organization" }.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/WrongEntityTypeChange
+  - term: MissingResultChange
+    definition: 'For issue_type missing_result: what should have been returned. Put video/channel/timestamp context in notes.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MissingResultChange
+  - term: WrongClassificationChange
+    definition: 'For issue_type wrong_classification: the commercial class the row should carry.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/WrongClassificationChange
+  - term: StaleMetadataChange
+    definition: 'For issue_type stale_metadata: the field and its correct value, with a source URL when you have one.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/StaleMetadataChange
+  - term: BadRankingChange
+    definition: 'For issue_type bad_ranking: the expected and observed positions of the row.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/BadRankingChange
+  - term: MissedAlertChange
+    definition: 'For issue_type missed_alert: an expectation with no alert row to target. Omit the correction id and describe where the alert
+      should have fired.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MissedAlertChange
+  - term: DeliveryIssueChange
+    definition: 'For issue_type delivery_issue: targets the delivery row (the correction id) and names the channel that was wrong or never received.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/DeliveryIssueChange
+  - term: FreeformSuggestedChange
+    definition: Any other object shape. Accepted and logged verbatim for human review; prefer the typed shapes above when one fits your issue_type.
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/FreeformSuggestedChange
+  - term: FeedbackReadbackResponse
+    definition: 'Object declared by the contract with fields: feedback_id, type, status, query, notes, created_at, corrections.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/FeedbackReadbackResponse
+  - term: FeedbackReadbackCorrection
+    definition: 'Object declared by the contract with fields: item_id, item_kind, issue_type, reason, suggested_change, notes, status, resolution_note,
+      created_at.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/FeedbackReadbackCorrection
+  - term: ChannelSponsorsResponse
+    definition: 'Object declared by the contract with fields: channel, sponsors, meta, access.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/ChannelSponsorsResponse
+  - term: ChannelSponsor
+    definition: 'Object declared by the contract with fields: entity, ad_reads, videos, first_seen, last_seen, sponsor_status.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/ChannelSponsor
+  - term: TranscriptSearchResponse
+    definition: 'Object declared by the contract with fields: query, limit, returned, filters, window, chunks, partial, failed_batches, as_of,
+      search_index, access, unlock. (1 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptSearchResponse
+  - term: NamedEntityRef
+    definition: 'Object declared by the contract with fields: id, name, type.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/NamedEntityRef
+  - term: TranscriptSearchChunk
+    definition: 'Object declared by the contract with fields: id, video_id, channel_id, channel_name, channel_page, video_title, speakers, source,
+      source_label, published_at, text, start_seconds. (5 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptSearchChunk
+  - term: EntityMomentumResponse
+    definition: 'Object declared by the contract with fields: entity, verdict, as_of, coverage, volume, top_shows, paid_vs_organic, access, note.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/EntityMomentumResponse
+  - term: ChannelCoverageResponse
+    definition: 'Object declared by the contract with fields: channel, note.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/ChannelCoverageResponse
+  - term: ChannelVideosResponse
+    definition: 'Object declared by the contract with fields: channel, episodes, returned, has_more, next_cursor, window, indexed_through, index_age_days,
+      as_of, note.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/ChannelVideosResponse
+  - term: MentionCountsResponse
+    definition: 'Object declared by the contract with fields: mode, window, channel_ids, video_ids, rows, returned, has_more, shared, as_of, note.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MentionCountsResponse
+  - term: MonitorListResponse
+    definition: 'Object declared by the contract with fields: monitors.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MonitorListResponse
+  - term: Monitor
+    definition: 'Object declared by the contract with fields: id, name, paused, notify_emails, email_recipients, notify_frequency, digest_day,
+      digest_time, notify_webhook, webhook_url, webhook_secret_set, webhook_secret_hint. (11 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/Monitor
+  - term: MonitorMutationResponse
+    definition: 'Object declared by the contract with fields: monitor, message.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MonitorMutationResponse
+  - term: WebhookSecretRotateResponse
+    definition: 'Object declared by the contract with fields: webhook_secret, webhook_secret_hint, previous_secret_expires_at.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/WebhookSecretRotateResponse
+  - term: MonitorDeleteResponse
+    definition: 'Object declared by the contract with fields: message, trackers_deleted.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MonitorDeleteResponse
+  - term: MonitorTrackersResponse
+    definition: 'Object declared by the contract with fields: trackers, count.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MonitorTrackersResponse
+  - term: AlertListResponse
+    definition: 'Object declared by the contract with fields: alerts, has_more, next_cursor.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/AlertListResponse
+  - term: Alert
+    definition: 'Object declared by the contract with fields: id, tracker_id, monitor_id, entity_id, mention_id, video_id, excerpt_id, evidence_kind,
+      channel, status, final_status, error_message. (5 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/Alert
+  - term: MonitorAddTrackersResponse
+    definition: 'Object declared by the contract with fields: attached_count, message, monitor_id.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MonitorAddTrackersResponse
+  - term: MonitorAddEntitiesResponse
+    definition: 'Object declared by the contract with fields: monitor_id, results.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MonitorAddEntitiesResponse
+  - term: MonitorEntityResult
+    definition: 'Object declared by the contract with fields: entity_id, name, type, canonical_entity_id, tracker_id, created, attached, reason,
+      current_monitor_id.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MonitorEntityResult
+  - term: SlackIntegrationListResponse
+    definition: 'Object declared by the contract with fields: integrations.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/SlackIntegrationListResponse
+  - term: TrackerListResponse
+    definition: 'Object declared by the contract with fields: trackers, count.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TrackerListResponse
+  - term: Tracker
+    definition: 'Object declared by the contract with fields: id, entity_name, entity_type, display_name, notify_email, notify_webhook, notify_slack,
+      webhook_url, slack_channel_id, slack_integration_id, filters, paused. (8 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/Tracker
+  - term: TrackerMutationResponse
+    definition: 'Object declared by the contract with fields: tracker, message.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TrackerMutationResponse
+  - term: MessageResponse
+    definition: 'Object declared by the contract with fields: message.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/MessageResponse
+  - term: TranscriptResponse
+    definition: 'Object declared by the contract with fields: state, video, quality, source, language, languages, lines, paragraphs, speakers,
+      revision, range, rows_billed. (4 more)'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptResponse
+  - term: TranscriptVideo
+    definition: 'Object declared by the contract with fields: id, title, channel_id, channel_name, published_at, duration_seconds, watch_url.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptVideo
+  - term: CaptionTrack
+    definition: 'Object declared by the contract with fields: code, name, generated.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/CaptionTrack
+  - term: TranscriptFailed
+    definition: 'Object declared by the contract with fields: state, quality, video_id, job, last_attempt, note.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptFailed
+  - term: TranscriptPending
+    definition: 'Object declared by the contract with fields: state, quality, video_id, job.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptPending
+  - term: TranscriptPurchaseQuote
+    definition: 'Object declared by the contract with fields: video_id, duration_seconds, billing_scope, owned, eligible, upgrade, quote, charge,
+      credits_per_row, max_on_demand_cents, on_demand_cents_per_unit, refund_policy.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptPurchaseQuote
+  - term: TranscriptionListResponse
+    definition: 'Object declared by the contract with fields: requests, has_more, next_cursor.'
+    tags:
+    - Object
+    source: openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptionListResponse

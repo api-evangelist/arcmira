@@ -1,0 +1,39 @@
+generated: '2026-10-03'
+method: searched
+generator: extract-docs-artifacts.py (local)
+source: https://arcmira.com/pricing
+sources:
+- https://arcmira.com/pricing
+- https://arcmira.com/pricing?src=llms-txt
+- https://arcmira.com/docs/transcripts
+- https://arcmira.com/docs/usage-and-billing.md
+name: Arcmira pricing
+audience: business-product
+pricing_basis: per-seat
+plans:
+- name: Free
+  price_text: $0 /mo
+  price: 0
+  description: No card required, Preview indexed appearances, Limited Search usage, 2 monitored names
+- name: Pro
+  price_text: $20 /mo
+  price: 20
+  description: Search and transcript analysis, 10 monitored names, Real-time alerts, Core API access
+- name: Pro+
+  price_text: $60 /mo
+  price: 60
+  description: Everything in Pro, 3x Pro included usage, 30 monitored names, Commercial intelligence API
+- name: Ultra
+  price_text: $200 /mo
+  price: 200
+  description: Everything in Pro+, 20x Pro included usage, 200 monitored names, Priority access to new features
+- name: Enterprise
+  price_text: Custom
+  description: Custom pricing and usage, Volume discounts, Invoice/PO billing, SCIM user management, Priority support
+  features:
+  - Custom pricing and usage
+  - Volume discounts
+  - Invoice/PO billing
+  - SCIM user management
+  - Priority support
+docs: https://arcmira.com/pricing

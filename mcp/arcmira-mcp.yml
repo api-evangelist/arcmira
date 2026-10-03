@@ -1,0 +1,194 @@
+generated: '2026-10-03'
+method: derived
+generator: derive-mcp-candidate.py
+source:
+- openapi/_original/arcmira-v1-openapi.json
+status: candidate
+deployment:
+  mode: none
+  auth: unknown
+  verified: probed
+note: 'No MCP server was found. The pre-flight posted tools/list to /mcp on arcmira.com, api.arcmira.com, docs.arcmira.com; verdict opaque (https://arcmira.com/api/mcp
+  answered 403: the edge authenticates before it routes, which proves nothing either way). Candidate tools below are derived from the 36 operation(s)
+  in the provider''s own OpenAPI (36 listed); they describe what a server WOULD expose, not one that exists.'
+tools:
+- name: get_health
+  operationId: get_health
+  method: GET
+  path: /v1/health
+  description: Health check
+- name: get_openapi_document
+  operationId: get_openapi_document
+  method: GET
+  path: /v1/openapi.json
+  description: OpenAPI document
+- name: get_me
+  operationId: get_me
+  method: GET
+  path: /v1/me
+  description: Current API key context
+- name: update_my_settings
+  operationId: update_my_settings
+  method: PATCH
+  path: /v1/me/settings
+  description: Set account defaults
+- name: create_signup
+  operationId: create_signup
+  method: POST
+  path: /v1/signups
+  description: Send a verification code to an address
+- name: verify_signup
+  operationId: verify_signup
+  method: POST
+  path: /v1/signups/verify
+  description: Exchange a verification code for an account key
+- name: resolve_entity
+  operationId: resolve_entity
+  method: GET
+  path: /v1/entities/resolve
+  description: A name to one id, before any filter
+- name: get_entity
+  operationId: get_entity
+  method: GET
+  path: /v1/entities/{id}
+  description: Get canonical entity metadata
+- name: list_mentions
+  operationId: list_mentions
+  method: GET
+  path: /v1/mentions
+  description: Search mentions across media
+- name: list_recommendations
+  operationId: list_recommendations
+  method: GET
+  path: /v1/recommendations
+  description: Search recommendations across media
+- name: submit_feedback
+  operationId: submit_feedback
+  method: POST
+  path: /v1/feedback
+  description: Submit feedback and corrections for a prior API query
+- name: get_feedback
+  operationId: get_feedback
+  method: GET
+  path: /v1/feedback/{feedback_id}
+  description: Read back a feedback submission and its review status
+- name: list_channel_sponsors
+  operationId: list_channel_sponsors
+  method: GET
+  path: /v1/channels/{channel_id}/sponsors
+  description: List recurring channel sponsors
+- name: search
+  operationId: search
+  method: GET
+  path: /v1/search
+  description: Retrieve spoken transcript slices for one topic
+- name: get_entity_momentum
+  operationId: get_entity_momentum
+  method: GET
+  path: /v1/entities/{id}/momentum
+  description: Spoken-web heat for one entity
+- name: get_channel_coverage
+  operationId: get_channel_coverage
+  method: GET
+  path: /v1/channels/{channel_id}/coverage
+  description: What the index holds for a channel
+- name: list_channel_videos
+  operationId: list_channel_videos
+  method: GET
+  path: /v1/channels/{channel_id}/videos
+  description: Newest indexed videos of a channel
+- name: count_mentions
+  operationId: count_mentions
+  method: GET
+  path: /v1/mentions/counts
+  description: Ranked catalog counts of who a set of channels mention
+- name: list_monitors
+  operationId: list_monitors
+  method: GET
+  path: /v1/monitors
+  description: List monitors
+- name: create_monitor
+  operationId: create_monitor
+  method: POST
+  path: /v1/monitors
+  description: Create monitor
+- name: update_monitor
+  operationId: update_monitor
+  method: PATCH
+  path: /v1/monitors/{id}
+  description: Update monitor
+- name: delete_monitor
+  operationId: delete_monitor
+  method: DELETE
+  path: /v1/monitors/{id}
+  description: Delete monitor
+- name: rotate_monitor_webhook_secret
+  operationId: rotate_monitor_webhook_secret
+  method: POST
+  path: /v1/monitors/{id}/webhook-secret/rotate
+  description: Rotate the monitor webhook signing secret
+- name: list_monitor_trackers
+  operationId: list_monitor_trackers
+  method: GET
+  path: /v1/monitors/{id}/trackers
+  description: List monitor trackers
+- name: add_monitor_trackers
+  operationId: add_monitor_trackers
+  method: POST
+  path: /v1/monitors/{id}/trackers
+  description: Add trackers to monitor
+- name: list_monitor_alerts
+  operationId: list_monitor_alerts
+  method: GET
+  path: /v1/monitors/{id}/alerts
+  description: List recent monitor alerts
+- name: add_monitor_entities
+  operationId: add_monitor_entities
+  method: POST
+  path: /v1/monitors/{id}/entities
+  description: Follow entities in a monitor by id or exact name
+- name: list_slack_integrations
+  operationId: list_slack_integrations
+  method: GET
+  path: /v1/integrations/slack
+  description: List connected Slack workspaces
+- name: list_trackers
+  operationId: list_trackers
+  method: GET
+  path: /v1/trackers
+  description: List trackers
+- name: create_tracker
+  operationId: create_tracker
+  method: POST
+  path: /v1/trackers
+  description: Create tracker
+- name: update_tracker
+  operationId: update_tracker
+  method: PATCH
+  path: /v1/trackers/{id}
+  description: Update tracker
+- name: delete_tracker
+  operationId: delete_tracker
+  method: DELETE
+  path: /v1/trackers/{id}
+  description: Delete tracker
+- name: list_tracker_alerts
+  operationId: list_tracker_alerts
+  method: GET
+  path: /v1/trackers/{id}/alerts
+  description: List recent tracker alerts
+- name: get_transcript
+  operationId: get_transcript
+  method: GET
+  path: /v1/transcripts/{video_id}
+  description: Get a video transcript
+- name: quote_transcription
+  operationId: quote_transcription
+  method: GET
+  path: /v1/transcripts/{video_id}/quote
+  description: Quote a whole-video Premium purchase
+- name: list_transcriptions
+  operationId: list_transcriptions
+  method: GET
+  path: /v1/transcriptions
+  description: List your transcription requests

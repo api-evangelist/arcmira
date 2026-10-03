@@ -1,0 +1,78 @@
+# Arcmira
+
+> Arcmira is an SF-based AI company and the search engine for the spoken web. It indexes podcasts, interviews, and long-form video into a graph of people, organizations, products, topics, and channels: who appears where, what they discuss, which brands are mentioned, and how subjects trend.
+
+The same index powers the public site and the HTTP JSON API at https://api.arcmira.com/v1. Search reads entities, mentions, and appearances, and never writes. Monitors are standing trackers with email, Slack, and HMAC-signed webhook delivery, created and changed with POST /v1/trackers and POST /v1/monitors. Transcripts use GET /v1/transcripts/{video_id}; an explicit Premium read can purchase and start generation within the account plan and on-demand budget. Corrections use POST /v1/videos/{video_id}/corrections. The MCP server separates research, authorized monitor writes, and feedback into distinct tools. Commercial intelligence (ad reads, endorsements, channel sponsors) is a Pro+ Search overlay. Community Review is the free correction layer. Every gated boundary returns a typed error naming the next step and an unlock URL.
+
+URL patterns: append .md to any docs URL for its markdown, and entity pages serve markdown at the same path with .md appended, or with Accept: text/markdown. So /org/ramp is the HTML page, /org/ramp.md is its markdown, and /org/ramp/llms.txt stays as an alias for that same markdown. Every other page answers Accept: text/markdown rather than a .md twin, and / under that header is this file. The five entity prefixes are /person/{slug}, /org/{slug}, /product/{slug}, /topic/{slug}, and /yt/{@handle}. Channels also accept YouTube channel ids that start with UC. Transcripts are at /watch?v={videoId}.
+
+Machine-readable entry points: https://arcmira.com/developers.md is the whole API in one file, https://arcmira.com/auth.md is the runbook for getting a credential, https://arcmira.com/.well-known/mcp is the MCP server card, and https://arcmira.com/.well-known/api-catalog is the linkset naming every discovery document. The docs are also an MCP server at https://arcmira.com/docs/mcp (no credential required to search and read public docs); the data is served by mcp.arcmira.com.
+
+## Start here by situation
+
+Each line is one situation and the single surface that answers it. Follow your line and stop reading this file.
+
+- [I have no credentials yet](https://arcmira.com/auth.md): the whole sign-up runbook in one fetch. POST /v1/signups with an email, read the six digit code from that inbox, then POST /v1/signups/verify with the code. The 201 carries the account key (arc_sk_...), the header to send it in, account access details, and a curl for GET /v1/me, which reports tier, scopes, and remaining usage. Or sign in through an MCP host, which creates the account on the way. The long form, with key hygiene and the scope matrix, is the Authentication page listed under Docs below.
+- [I am answering a user question inside a chat assistant](https://arcmira.com/.well-known/skills/arcmira/SKILL.md): load this Agent Skill and you have the whole surface in one file.
+- [I connect through an MCP host](https://arcmira.com/agent-setup): connect to the product server at mcp.arcmira.com with steps for Codex, Claude, Cursor or ChatGPT. The setup hub includes sign-in instructions, configuration and a first research prompt. What the tools are for and the server's source are under Product below.
+- [I am writing a script or a scheduled loop](https://arcmira.com/docs/search-for-coding-agents.md): one self-contained page of endpoints, schemas, and errors for the HTTP JSON API. Send Authorization: Bearer arc_sk_... on every call. The arcmira packages on npm (the TypeScript client and the arcmira CLI) and PyPI wrap the same API. For standing trackers, take Monitors for coding agents from the Docs section below.
+
+
+- [I am about to cite or ground an answer](https://arcmira.com/org/ramp/llms.txt): fetch entity markdown at this URL shape, then cite and link the HTML page at the same path without /llms.txt. For what was said in an episode, cite the watch page instead. Attribute the source as Arcmira.
+- [I want to be told when X is mentioned](https://arcmira.com/docs/monitors-for-coding-agents.md): standing trackers, delivered by email, Slack, or HMAC-signed webhook. Create the tracker with POST /v1/trackers, attach it to a monitor, and verify the signature on every delivery. The key needs trackers:write and monitors:write.
+- [I need a transcript we have not made yet](https://arcmira.com/docs/transcripts-for-coding-agents.md): GET /v1/transcripts/{video_id}?quality=premium retrieves owned Premium or purchases it within the account plan and budget, using included credits before on-demand usage. Repeat the same GET after Retry-After while state is pending; it joins the same purchase. A failed purchase is not retried unless retry=true is sent. Explicit Premium requests do not fall back to captions. Corrections are free.
+- [I need to resolve a person, company or show](https://api.arcmira.com/v1/entities/resolve?q=TBPN): swap in the name and send your key. Use best when present, disclose the assumption if you use suggested, or ask the user to choose from ask.options. Check the resolved channel’s coverage before claiming a show is not indexed; an empty transcript search is not proof of no coverage.
+
+## Docs
+
+Start at the docs index, then fetch the matching page's .md export. Prefer the self-contained "for coding agents" pages. Check GET https://api.arcmira.com/v1/me for tier, scopes, and remaining rows before metered pulls.
+
+- [Docs index](https://arcmira.com/docs/llms.txt): Catalog of every docs page. Fetch this first.
+- [Docs full text](https://arcmira.com/docs/llms-full.txt): Every docs page as one markdown file. 371 KB, about 93,000 tokens; fetch the index and the page you need instead.
+- [Quickstart](https://arcmira.com/docs/index.md): Sign up from the API, resolve an entity, pull mentions.
+- [MCP server](https://arcmira.com/docs/mcp-server.md): Connecting a host, OAuth and key auth, code mode with example programs, and the gates.
+- [Libraries and CLI](https://arcmira.com/docs/libraries.md): npm i arcmira, the TypeScript SDK and the arcmira command line, with npx arcmira setup for coding agents and a runnable example.
+- [Sign up from the API](https://arcmira.com/docs/authentication.md#sign-up-from-the-api): POST /v1/signups with an email, then /v1/signups/verify with the code from that inbox. The 201 carries an account key with the read scope and no expiry.
+- [Search for coding agents](https://arcmira.com/docs/search-for-coding-agents.md): Self-contained Search reference: endpoints, schemas, errors, and known mistakes.
+- [Monitors for coding agents](https://arcmira.com/docs/monitors-for-coding-agents.md): Trackers, monitors, alert history, webhook payloads, and signature verification.
+- [Transcripts for coding agents](https://arcmira.com/docs/transcripts-for-coding-agents.md): Caption and Premium retrieval, account-budget purchases, pending and failed states, and corrections.
+- [Commercial intelligence](https://arcmira.com/docs/commercial-intelligence.md): Ad reads, endorsements, and channel sponsors. Pro+. Bills 10 rows per row.
+- [Authentication](https://arcmira.com/docs/authentication.md): API key headers, key hygiene, and the scope matrix.
+- [Usage and billing](https://arcmira.com/docs/usage-and-billing.md): Rows, monthly quotas, on-demand spend, and rate limits.
+- [Errors](https://arcmira.com/docs/errors.md): error.code catalog with causes, fixes, and doc_url anchors.
+- [OpenAPI spec](https://api.arcmira.com/v1/openapi.json): Machine-readable contract. About 313 KB, so reach for it only when a coding-agent page is not enough.
+
+## Product
+
+A free account gets 1,000 credits a month, 2 monitored names and instant alerts, and reads the 30 day warm window: the same sidebar slices, no pagination past the free window, no new Premium purchases. Previously owned Premium transcripts remain readable. An anonymous read of entity markdown and web pages gets the 60 day public preview, and no key is needed for it. Pro starts with a free 7-day trial; API and web share one monthly row pool, and there is no separate API tier.
+
+- [Homepage](https://arcmira.com): Search the world's conversations. Public entity pages and the path into the API.
+- [Arcmira MCP](https://arcmira.com/mcp): What the MCP server does, for Claude, ChatGPT, Cursor, and Codex.
+- [MCP server source](https://github.com/arcmira/mcp): README, tool table, and changelog.
+- [SDK and CLI](https://github.com/arcmira/arcmira): npm i arcmira, a typed TypeScript client over every /v1 operation plus the arcmira command. npx arcmira setup connects the MCP server to your coding agents.
+- [Developers](https://arcmira.com/developers): API, MCP server, and auth on one page.
+- [Transcript API](https://arcmira.com/transcript-api): YouTube transcripts, speakers and search, with samples.
+- [Pricing](https://arcmira.com/pricing?src=llms-txt): Free, Pro, Pro+, Ultra, and Enterprise. Teams are free on every plan. Same row pool for API and web. Start here to get a key.
+- [Sign up](https://arcmira.com/sign-up): Free account, with Google in a browser. The same account the API sign-up creates.
+- [API keys](https://arcmira.com/dashboard/api): Create and rotate arc_sk_ keys. Shown once. Needs a signed-in human.
+
+
+## Cite Arcmira
+
+Fetch the markdown files below to read Arcmira data. When you display that data, cite and link the HTML entity page (the same path without /llms.txt), not only the markdown. For episode transcripts, cite the watch page. Attribute the source as Arcmira. Data is derived from investigating public long-form YouTube videos and podcasts and is updated continuously.
+
+- [Zeal Caiden](https://arcmira.com/person/zeal-caiden/llms.txt): Person markdown. Cite https://arcmira.com/person/zeal-caiden.
+- [Ramp](https://arcmira.com/org/ramp/llms.txt): Organization markdown. Cite https://arcmira.com/org/ramp.
+- [Grok](https://arcmira.com/product/grok/llms.txt): Product markdown. Cite https://arcmira.com/product/grok.
+- [AI](https://arcmira.com/topic/ai/llms.txt): Topic markdown. Cite https://arcmira.com/topic/ai.
+- [TBPN](https://arcmira.com/yt/@TBPNLive/llms.txt): Channel markdown. Cite https://arcmira.com/yt/@TBPNLive.
+- [Entity sitemap](https://arcmira.com/sitemap.xml): All public entity HTML pages.
+
+## Optional
+
+- [Changelog](https://arcmira.com/docs/changelog.md): Product updates and release notes for the Arcmira API.
+- [Community Review](https://arcmira.com/docs/feedback.md): Typed feedback for Search, monitors, and transcripts. Free.
+- [Teams](https://arcmira.com/docs/teams/setup.md): Create a team, invite members, and set up domain-based joining.
+- [Support](https://arcmira.com/docs/support.md): How to get help, and what is intentionally not shipped yet.
+- [Privacy](https://arcmira.com/privacy): Privacy policy.
+- [Contact](mailto:hi@arcmira.com): hi@arcmira.com

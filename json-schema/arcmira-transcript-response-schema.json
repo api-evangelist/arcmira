@@ -1,0 +1,875 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/arcmira/main/json-schema/arcmira-transcript-response-schema.json",
+  "title": "TranscriptResponse",
+  "x-generated": "2026-10-03",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/_original/arcmira-v1-openapi.json#/components/schemas/TranscriptResponse",
+  "type": "object",
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": [
+        "ready"
+      ]
+    },
+    "video": {
+      "$ref": "#/$defs/TranscriptVideo"
+    },
+    "quality": {
+      "type": "string",
+      "enum": [
+        "captions",
+        "premium"
+      ],
+      "description": "The requested quality. Premium is served only with an owned unlock; it never falls back to captions."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "creator_captions",
+        "third_party_quick",
+        "arcmira_premium"
+      ],
+      "description": "Public source class. creator_captions were written or approved by the channel, third_party_quick are YouTube automatic captions, arcmira_premium is our own diarized transcript."
+    },
+    "language": {
+      "type": "string",
+      "description": "The resolved track code, asr-en style when the track is automatic."
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CaptionTrack"
+      },
+      "description": "Every caption track the video offers. Empty when we did not list them on this call."
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "number",
+            "description": "Line start in seconds from the beginning of the video."
+          },
+          "end": {
+            "type": "number",
+            "description": "Line end in seconds."
+          },
+          "text": {
+            "type": "string"
+          },
+          "speaker": {
+            "type": "integer",
+            "description": "The person saying this line, present on every Premium line. Join it against speakers[].id."
+          },
+          "index": {
+            "type": "integer",
+            "description": "Line index, present on every Premium line. Stable within one revision."
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "text"
+        ]
+      },
+      "description": "Present when timestamps is true. Cite start with watch_url."
+    },
+    "paragraphs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "number",
+            "description": "Paragraph start in seconds."
+          },
+          "text": {
+            "type": "string"
+          },
+          "speaker": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "text"
+        ]
+      },
+      "description": "Present when timestamps is false. Lines joined on speaker changes for Premium and on sentence boundaries for captions."
+    },
+    "speakers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "x-arcmira-ordinal": true,
+            "description": "Speaker id, numbered in the order people first speak. Only meaningful with this read and its revision."
+          },
+          "name": {
+            "type": "string",
+            "description": "The identified person, or Speaker 1, Speaker 2 and so on for a voice nobody has identified yet."
+          },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Public entity id (\"ent_{n}\") of the identified person. Null when the speaker is unidentified."
+          },
+          "confidence": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "high when the name was reviewed, low when it is your own identification still awaiting review, null when nobody is identified."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "entity_id",
+          "confidence"
+        ]
+      },
+      "description": "Premium only. Speaker identification is right most of the time and wrong sometimes; say it came from Arcmira when a name matters."
+    },
+    "revision": {
+      "type": "string",
+      "description": "Premium reads only. Opaque id of the transcript you were served, the approved corrections on it, and who speaks each line. It changes when any of those change."
+    },
+    "range": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "description": "Echoed when you sent start and end. Lines overlapping the window are returned. On captions only the window is billed. An explicit Premium read can purchase the whole video within the account budget; the window only trims the returned content."
+    },
+    "rows_billed": {
+      "type": "integer",
+      "description": "Caption retrieval rows charged by this call. 0 on a repeat of the same video, quality, language, and range inside the 7 day dedupe window. Premium responses report 0 here even when the read purchased the whole video; this field does not report Premium purchase charges."
+    },
+    "as_of": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "When the transcript was produced."
+    },
+    "premium_job": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/TranscriptionJob"
+        },
+        {
+          "description": "Your open Premium purchase for this video, when captions were served while it transcribes."
+        }
+      ]
+    },
+    "access": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "invalid_request_error",
+            "authentication_error",
+            "permission_error",
+            "quota_exceeded",
+            "rate_limit_error",
+            "not_found",
+            "conflict_error",
+            "server_error"
+          ],
+          "description": "The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling."
+        },
+        "code": {
+          "type": "string",
+          "description": "The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "no_credential",
+            "invalid",
+            "revoked"
+          ],
+          "description": "Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable."
+        },
+        "message": {
+          "type": "string",
+          "description": "One plain line. Names the fix or the unlock."
+        },
+        "param": {
+          "type": "string",
+          "description": "The query or body parameter the gate refused, when one did."
+        },
+        "gate": {
+          "type": "string",
+          "enum": [
+            "rows",
+            "key",
+            "plan",
+            "freshness",
+            "exposure_law",
+            "rate",
+            "pagination"
+          ],
+          "description": "Which boundary refused. Present on every gate error; switch on it without parsing the message."
+        },
+        "resource": {
+          "$ref": "#/$defs/ErrorResource"
+        },
+        "unlock": {
+          "type": "object",
+          "properties": {
+            "tier": {
+              "type": "string",
+              "description": "The plan that lifts the gate."
+            },
+            "url": {
+              "type": "string",
+              "description": "Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim."
+            },
+            "offer": {
+              "type": "null",
+              "description": "Reserved for the agent-discount offer. Always null today."
+            },
+            "action": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "What the call does. send_signup_code sends a verification code to an address for an account key."
+                },
+                "method": {
+                  "type": "string",
+                  "description": "HTTP method to use."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Absolute endpoint carrying its ?src= attribution. Call it verbatim."
+                }
+              },
+              "required": [
+                "kind",
+                "method",
+                "url"
+              ],
+              "description": "The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens."
+            }
+          },
+          "required": [
+            "tier",
+            "url",
+            "offer"
+          ],
+          "description": "How to lift the gate. Present when the gate has an unlock."
+        },
+        "retry_after_seconds": {
+          "type": "integer",
+          "description": "Present on rate gates. Mirrors the Retry-After header."
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "quote": {
+              "$ref": "#/$defs/RefusedQuote"
+            },
+            "existing_id": {
+              "type": "string",
+              "description": "On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "On tracker_limit, the trackers the plan holds."
+            },
+            "count": {
+              "type": "integer",
+              "description": "On tracker_limit, the trackers the account holds now."
+            }
+          },
+          "description": "Machine data the refusal carries for you to act on. Present only on the codes that name a field here."
+        },
+        "doc_url": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "code",
+        "message",
+        "doc_url",
+        "request_id"
+      ],
+      "description": "The gate that reduced this response. Present only when something was withheld; carries the same code, gate, and unlock an outright refusal would."
+    },
+    "note": {
+      "type": "string",
+      "description": "One steering sentence for the agent reading this. On Premium it is the diarization disclosure verbatim."
+    }
+  },
+  "required": [
+    "state",
+    "video",
+    "quality",
+    "source",
+    "language",
+    "languages",
+    "rows_billed",
+    "as_of",
+    "note"
+  ],
+  "$defs": {
+    "CaptionTrack": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Caption track code, e.g. en or de. Pass it as language to select this track."
+        },
+        "name": {
+          "type": "string",
+          "description": "Track name as YouTube reports it."
+        },
+        "generated": {
+          "type": "boolean",
+          "description": "True for YouTube automatic captions, false for a track the channel wrote or approved."
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "generated"
+      ]
+    },
+    "ErrorResource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "media_rows"
+              ]
+            },
+            "beyond_row": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "beyond_row"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "fresh_media"
+              ]
+            },
+            "window_days": {
+              "type": "integer"
+            },
+            "cutoff": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "window_days",
+            "cutoff"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "sidebar_rows"
+              ]
+            },
+            "section": {
+              "type": "string",
+              "enum": [
+                "topics",
+                "entities"
+              ]
+            },
+            "beyond_row": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "section",
+            "beyond_row"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "counts"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "chart"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "pagination"
+              ]
+            },
+            "param": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "offset",
+                "cursor",
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "param"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "premium_transcript"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "filter"
+              ]
+            },
+            "param": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "param"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "commercial"
+              ]
+            },
+            "what": {
+              "type": "string",
+              "enum": [
+                "sponsors",
+                "recommendations",
+                "mention_details",
+                "community_review",
+                "paid_split"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "what"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "feature"
+              ]
+            },
+            "feature": {
+              "type": "string",
+              "enum": [
+                "api",
+                "export"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "feature"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "rows"
+              ]
+            },
+            "requested": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "remaining": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "requested",
+            "remaining"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "key"
+              ]
+            },
+            "scope": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "read",
+                "monitors:write",
+                "trackers:write",
+                "recommendations:read",
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "scope"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "requests"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ],
+      "description": "The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds."
+    },
+    "RefusedQuote": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/TranscriptQuote"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "charge": {
+              "type": "object",
+              "properties": {
+                "unit": {
+                  "type": "string",
+                  "enum": [
+                    "rows",
+                    "credits"
+                  ]
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "included",
+                    "on_demand",
+                    "mixed"
+                  ],
+                  "description": "Where the charge would come from at the current balance."
+                }
+              },
+              "required": [
+                "unit",
+                "amount",
+                "from"
+              ],
+              "description": "What the purchase would charge at the current balance. Absent when no current price could be read."
+            },
+            "max_on_demand_cents": {
+              "type": "integer",
+              "description": "The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance."
+            }
+          }
+        }
+      ],
+      "description": "The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required."
+    },
+    "TranscriptQuote": {
+      "type": "object",
+      "properties": {
+        "quarters": {
+          "type": "integer",
+          "description": "Number of 15-minute blocks in the video, ceiling'd, minimum 1."
+        },
+        "rows": {
+          "type": "integer",
+          "description": "Total unlock cost in rows: 75 rows per 15-minute block."
+        }
+      },
+      "required": [
+        "quarters",
+        "rows"
+      ]
+    },
+    "TranscriptVideo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "YouTube video id (11 characters)."
+        },
+        "title": {
+          "type": "string",
+          "description": "Video title. Empty when we could not read it."
+        },
+        "channel_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "YouTube channel id of the source channel."
+        },
+        "channel_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "published_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Publish timestamp. Cite it as the date of anything you quote."
+        },
+        "duration_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Video length in seconds. Null when unknown, which also means the row estimate was unknown."
+        },
+        "watch_url": {
+          "type": "string",
+          "description": "Canonical YouTube watch URL."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "channel_id",
+        "channel_name",
+        "published_at",
+        "duration_seconds",
+        "watch_url"
+      ]
+    },
+    "TranscriptionJob": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Transcription request id (UUID)."
+        },
+        "video_id": {
+          "type": "string",
+          "description": "YouTube video id (11 characters)."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "ready",
+            "failed",
+            "refunded"
+          ],
+          "description": "Coarse outcome: pending until the Premium transcript is servable (ready), the purchase failed, or it was refunded."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "downloading",
+            "transcribing",
+            "analyzing",
+            "complete",
+            "failed",
+            "refund_pending",
+            "refunded"
+          ],
+          "description": "Request status. Values: queued (accepted; audio download not started), downloading (fetching the video audio), transcribing (premium speech-to-text is running), analyzing (entity/commercial analysis is running), complete (premium transcript is servable via GET /v1/transcripts/{video_id}), failed (rejected intent or legacy purchase requiring accounting review), refund_pending (refund transaction must still complete), refunded (terminal failure; the charged rows were returned and the unlock this submission bought was revoked)."
+        },
+        "stage": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "queued",
+            "transcribing",
+            "analyzing",
+            null
+          ],
+          "description": "User-facing stage: downloading folds into transcribing. Values: queued (waiting to start), transcribing (downloading or transcribing), analyzing (analysis running). Null for terminal statuses and refund_pending."
+        },
+        "charge": {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "enum": [
+                "credits"
+              ]
+            },
+            "amount": {
+              "type": "number",
+              "description": "Credits this purchase charged. 0 when a prior unlock made it free."
+            },
+            "from": {
+              "type": "string",
+              "enum": [
+                "included",
+                "on_demand",
+                "mixed"
+              ],
+              "description": "Where the credits came from: the included allowance, on-demand usage, or both. Present once the purchase is funded."
+            }
+          },
+          "required": [
+            "unit",
+            "amount"
+          ],
+          "description": "What the purchase charged. Present on durable purchases; absent only on legacy requests."
+        },
+        "eta_seconds": {
+          "type": "integer",
+          "description": "Estimated seconds until completion, re-derived from live pipeline telemetry on every poll. Only present while the request is in flight; absent on refund_pending, which has no completion ETA."
+        },
+        "next_poll_seconds": {
+          "type": "integer",
+          "description": "Seconds to sleep before the next poll (also sent as the Retry-After header). Only present while the request is in flight."
+        },
+        "error": {
+          "type": "string",
+          "description": "Failure reason. Only present when state is failed or refunded, or status is refund_pending."
+        },
+        "refunded": {
+          "type": "boolean",
+          "description": "True when the charge was returned. Only present when state is failed or refunded, or status is refund_pending (false until the refund lands)."
+        },
+        "created_at": {
+          "type": "string",
+          "description": "When the request was submitted."
+        },
+        "completed_at": {
+          "type": "string",
+          "description": "When the request reached a terminal status. Absent while in flight."
+        },
+        "status_url": {
+          "type": "string",
+          "description": "Absolute URL to read again for this job: GET /v1/transcripts/{video_id}?quality=premium, which answers 202 while it transcribes, 200 ready once it is done, and 200 failed if it failed."
+        }
+      },
+      "required": [
+        "id",
+        "video_id",
+        "state",
+        "status",
+        "stage",
+        "created_at",
+        "status_url"
+      ],
+      "description": "A Premium transcript purchase with its processing state, charge and URL for reading the transcript again."
+    }
+  }
+}
