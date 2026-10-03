@@ -1,0 +1,32 @@
+aid: arcmira
+name: Arcmira
+description: 'Arcmira is a company surfaced via the API Evangelist harvest backlog (source: new-submission)
+  and added to the network as a stub for full-pipeline profiling.'
+url: https://raw.githubusercontent.com/api-evangelist/arcmira/refs/heads/main/apis.yml
+x-type: company
+x-source: harvest:new-submission
+x-tier: stub
+x-tier-reason: harvest
+specificationVersion: '0.20'
+created: '2026-10-03'
+modified: '2026-10-03'
+tags:
+- Company
+apis: []
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com
+- FN: APIs.json
+  email: info@apis.io
+common:
+- type: Website
+  url: https://arcmira.com
+- type: Documentation
+  url: https://arcmira.com/docs
+x-submission-notes: 'Searches indexed YouTube/podcast transcripts for timestamped passages, people/topic
+  mentions, sponsors and ad reads, with JS/Python SDKs, CLI and an OAuth remote MCP. | Submitted twice
+  (Arcmira; Arcmira: YouTube Transcript Search) - one company. Listed on Kin call 2026-10-03.'
+x-submission-probe: root 200; docs 200; api.arcmira.com/v1/openapi.json 200 OpenAPI 3.1.0 'Arcmira API'
+  256KB; llms.txt 200; mcp server-card 200 (io.github.arcmira/arcmira); /zz-not-real-404 403 'request
+  blocked' (WAF, not soft-200); no repo api-evangelist/arcmira
+x-submitted-by: zeal@arcmira.com (apis.io/add, 2026-10-03)
