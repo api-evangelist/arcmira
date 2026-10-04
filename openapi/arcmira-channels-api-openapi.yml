@@ -1,0 +1,1008 @@
+openapi: 3.2.0
+info:
+  title: Arcmira Channels API
+  description: 'Search YouTube transcripts for timestamped passages. Find mentions of people, organizations, products and topics; research channel sponsors and recommendations; retrieve creator captions or Premium transcripts with speaker identification; and monitor entities for new mentions. Official API guides: https://arcmira.com/docs. Explicit Premium retrieval can purchase within the account plan and budget.'
+  version: 1.0.0
+  contact:
+    name: Arcmira
+    url: https://arcmira.com
+servers:
+- url: https://api.arcmira.com
+tags:
+- name: Channels
+paths:
+  /v1/channels/{channel_id}/coverage:
+    get:
+      tags:
+      - Channels
+      operationId: get_channel_coverage
+      summary: What the index holds for a channel
+      description: How many videos of a YouTube channel are searchable, the newest publish date among them, and the split by transcript source class. Call it when a search or mention lookup came back empty, before telling anyone we do not cover a show, and cite indexed_through as the as-of date for mentions and search_indexed_through for transcript search. It cannot request indexing; channel backfill is not available yet. Free (0 rows). Every gate is a typed error whose error.unlock.url names the plan that lifts it; pass src=mcp-tool only from the Arcmira MCP server.
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: YouTube channel id, the UC... form.
+        required: true
+        description: YouTube channel id, the UC... form.
+        name: channel_id
+        in: path
+      - schema:
+          type: string
+          enum:
+          - mcp-tool
+          description: The surface making this call. The Arcmira MCP server sends mcp-tool so every unlock link in a gate attributes to the directory install. Omit from your own client.
+        required: false
+        description: The surface making this call. The Arcmira MCP server sends mcp-tool so every unlock link in a gate attributes to the directory install. Omit from your own client.
+        name: src
+        in: query
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelCoverageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/channels/{channel_id}/videos:
+    get:
+      tags:
+      - Channels
+      operationId: list_channel_videos
+      summary: Newest indexed videos of a channel
+      description: The indexed videos of a YouTube channel, newest first, each with its video_id, title, publish date, duration, view count, and watch_url on arcmira.com. Pass next_cursor as cursor to continue. The signed token binds the route, filters, caller and visibility; invalid or old tokens return invalid_cursor. A first-page media ID fence excludes later insertions, including old-date backfills; edits and deletions to existing rows remain live. Call it for the latest or most recent episode of a show, or to list what a show published in a window, then pass a video_id to GET /v1/mentions/counts video_ids for what that episode mentions or to GET /v1/transcripts/{video_id} to read it. indexed_through is the newest date we hold for the channel. An empty list means nothing is indexed; channel backfill is not available yet. Bills one row per video returned. Every gate is a typed error whose error.unlock.url names the plan that lifts it; pass src=mcp-tool only from the Arcmira MCP server.
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: YouTube channel id, the UC... form.
+        required: true
+        description: YouTube channel id, the UC... form.
+        name: channel_id
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 25
+          default: 10
+          description: Videos to return, 1 to 25, newest first. Default 10. Pass 1 for the latest episode.
+        required: false
+        description: Videos to return, 1 to 25, newest first. Default 10. Pass 1 for the latest episode.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          description: Opaque continuation from next_cursor. Bound to the channel, filters, caller, and visibility; limit may change between pages. Invalid or old tokens return invalid_cursor.
+        required: false
+        description: Opaque continuation from next_cursor. Bound to the channel, filters, caller, and visibility; limit may change between pages. Invalid or old tokens return invalid_cursor.
+        name: cursor
+        in: query
+      - schema:
+          type: string
+          description: 'Only media published at or after this instant. An ISO 8601 date (2026-09-01) or datetime with offset (2026-09-01T00:00:00Z), read in UTC. The window is half-open: after is inclusive, before is exclusive.'
+        required: false
+        description: 'Only media published at or after this instant. An ISO 8601 date (2026-09-01) or datetime with offset (2026-09-01T00:00:00Z), read in UTC. The window is half-open: after is inclusive, before is exclusive.'
+        name: after
+        in: query
+      - schema:
+          type: string
+          description: 'Only media published before this instant, so before=2026-09-02 includes all of 2026-09-01. An ISO 8601 date (2026-09-01) or datetime with offset (2026-09-01T00:00:00Z), read in UTC. The window is half-open: after is inclusive, before is exclusive.'
+        required: false
+        description: 'Only media published before this instant, so before=2026-09-02 includes all of 2026-09-01. An ISO 8601 date (2026-09-01) or datetime with offset (2026-09-01T00:00:00Z), read in UTC. The window is half-open: after is inclusive, before is exclusive.'
+        name: before
+        in: query
+      - schema:
+          type: string
+          enum:
+          - mcp-tool
+          description: The surface making this call. The Arcmira MCP server sends mcp-tool so every unlock link in a gate attributes to the directory install. Omit from your own client.
+        required: false
+        description: The surface making this call. The Arcmira MCP server sends mcp-tool so every unlock link in a gate attributes to the directory install. Omit from your own client.
+        name: src
+        in: query
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelVideosResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '402':
+          $ref: '#/components/responses/QuotaExceeded'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  responses:
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    QuotaExceeded:
+      description: Quota exceeded
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    ChannelVideosResponse:
+      type: object
+      properties:
+        channel:
+          type: object
+          properties:
+            id:
+              type:
+              - string
+              - 'null'
+              description: Public entity id ("ent_{n}") of the channel. Null when no channel entity is known.
+            youtube_channel_id:
+              type: string
+              description: The channel id as supplied.
+            name:
+              type:
+              - string
+              - 'null'
+            page:
+              type:
+              - string
+              - 'null'
+              description: The channel's page on arcmira.com, absolute. Null when no channel is known.
+          required:
+          - id
+          - youtube_channel_id
+          - name
+          - page
+        episodes:
+          type: array
+          items:
+            type: object
+            properties:
+              video_id:
+                type: string
+                description: 11-character YouTube video id. Pass it to GET /v1/mentions/counts video_ids or GET /v1/transcripts/{video_id}.
+              title:
+                type:
+                - string
+                - 'null'
+              published_at:
+                type:
+                - string
+                - 'null'
+                description: ISO publish date on YouTube.
+              duration_seconds:
+                type:
+                - integer
+                - 'null'
+                description: Video length in seconds. Null when YouTube reported none.
+              view_count:
+                type:
+                - integer
+                - 'null'
+              channel_id:
+                type: string
+                description: The channel id as supplied.
+              channel_name:
+                type:
+                - string
+                - 'null'
+              channel_page:
+                type:
+                - string
+                - 'null'
+                description: The channel's page on arcmira.com, absolute. Null when no channel is known.
+              watch_url:
+                type: string
+                description: The episode on arcmira.com, absolute.
+            required:
+            - video_id
+            - title
+            - published_at
+            - duration_seconds
+            - view_count
+            - channel_id
+            - channel_name
+            - channel_page
+            - watch_url
+          description: Indexed videos of the channel, newest first.
+        returned:
+          type: integer
+        has_more:
+          type: boolean
+          description: True when more indexed videos exist past limit in the window.
+        next_cursor:
+          type:
+          - string
+          - 'null'
+          description: Signed continuation for the next page. Null on the last page.
+        window:
+          $ref: '#/components/schemas/PublicationWindow'
+        indexed_through:
+          type:
+          - string
+          - 'null'
+          description: Newest publish date among every indexed video of the channel, whatever window was asked for. Null when nothing is indexed.
+        index_age_days:
+          type:
+          - integer
+          - 'null'
+          description: Whole days between indexed_through and now. Past 30 the note says the index may be behind the channel. Null when nothing is indexed.
+        as_of:
+          type:
+          - string
+          - 'null'
+          description: Same as indexed_through.
+        note:
+          type: string
+          description: One steering sentence for the agent reading this.
+      required:
+      - channel
+      - episodes
+      - returned
+      - has_more
+      - next_cursor
+      - window
+      - indexed_through
+      - index_age_days
+      - as_of
+      - note
+      example:
+        channel:
+          id: ent_566342
+          youtube_channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
+          name: TBPN
+          page: https://arcmira.com/yt/@TBPNLive
+        episodes:
+        - video_id: dQw4w9WgXcQ
+          title: TBPN | Friday, August 28
+          published_at: '2026-08-28T17:00:00.000Z'
+          duration_seconds: 10812
+          view_count: 48210
+          channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
+          channel_name: TBPN
+          channel_page: https://arcmira.com/yt/@TBPNLive
+          watch_url: https://arcmira.com/watch?v=dQw4w9WgXcQ
+        returned: 1
+        has_more: true
+        window:
+          after: '2026-08-01T00:00:00Z'
+          before: null
+        indexed_through: '2026-08-28T17:00:00.000Z'
+        index_age_days: 3
+        as_of: '2026-08-28T17:00:00.000Z'
+        note: Newest indexed episodes first. Pass a video_id to count_occurrences videoIds to list what one episode mentions, or to get_transcript to read it.
+    ErrorResource:
+      oneOf:
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - media_rows
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - fresh_media
+          window_days:
+            type: integer
+          cutoff:
+            type:
+            - string
+            - 'null'
+        required:
+        - kind
+        - window_days
+        - cutoff
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - sidebar_rows
+          section:
+            type: string
+            enum:
+            - topics
+            - entities
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - section
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - counts
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - chart
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - pagination
+          param:
+            type:
+            - string
+            - 'null'
+            enum:
+            - offset
+            - cursor
+            - null
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - premium_transcript
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - filter
+          param:
+            type: string
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - commercial
+          what:
+            type: string
+            enum:
+            - sponsors
+            - recommendations
+            - mention_details
+            - community_review
+            - paid_split
+        required:
+        - kind
+        - what
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - feature
+          feature:
+            type: string
+            enum:
+            - api
+            - export
+        required:
+        - kind
+        - feature
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - rows
+          requested:
+            type:
+            - integer
+            - 'null'
+          remaining:
+            type:
+            - integer
+            - 'null'
+        required:
+        - kind
+        - requested
+        - remaining
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - key
+          scope:
+            type:
+            - string
+            - 'null'
+            enum:
+            - read
+            - monitors:write
+            - trackers:write
+            - recommendations:read
+            - null
+        required:
+        - kind
+        - scope
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - requests
+        required:
+        - kind
+      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
+    ChannelCoverageResponse:
+      type: object
+      properties:
+        channel:
+          type: object
+          properties:
+            youtube_channel_id:
+              type: string
+              description: The channel id as supplied.
+            searchable_videos:
+              type: integer
+              description: Videos with a completed transcript. 0 means we do not cover the channel.
+            indexed_through:
+              type:
+              - string
+              - 'null'
+              description: Newest publish date among those videos. Mentions, entity lookups and transcripts read through here. Null when nothing is indexed.
+            search_indexed_through:
+              type:
+              - string
+              - 'null'
+              description: Newest publish date transcript search can hit. New transcripts are searchable when they are indexed, so it equals indexed_through.
+            source_mix:
+              type: object
+              properties:
+                arcmira_premium:
+                  type: integer
+                creator_captions:
+                  type: integer
+                third_party_quick:
+                  type: integer
+              required:
+              - arcmira_premium
+              - creator_captions
+              - third_party_quick
+              description: searchable_videos split by transcript source class.
+          required:
+          - youtube_channel_id
+          - searchable_videos
+          - indexed_through
+          - search_indexed_through
+          - source_mix
+        note:
+          type: string
+          description: One steering sentence for the agent reading this.
+      required:
+      - channel
+      - note
+      example:
+        channel:
+          youtube_channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
+          searchable_videos: 412
+          indexed_through: '2026-08-28T17:00:00.000Z'
+          search_indexed_through: '2026-08-28T17:00:00.000Z'
+          source_mix:
+            arcmira_premium: 96
+            creator_captions: 301
+            third_party_quick: 15
+        note: Cite indexed_through as the as-of date for mentions and search_indexed_through for transcript search. An empty search is a miss up to search_indexed_through, not proof it was never said.
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - permission_error
+              - quota_exceeded
+              - rate_limit_error
+              - not_found
+              - conflict_error
+              - server_error
+              description: 'The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling.'
+            code:
+              type: string
+              description: 'The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first.'
+            reason:
+              type: string
+              enum:
+              - no_credential
+              - invalid
+              - revoked
+              description: 'Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable.'
+            message:
+              type: string
+              description: One plain line. Names the fix or the unlock.
+            param:
+              type: string
+              description: The query or body parameter the gate refused, when one did.
+            gate:
+              type: string
+              enum:
+              - rows
+              - key
+              - plan
+              - freshness
+              - exposure_law
+              - rate
+              - pagination
+              description: Which boundary refused. Present on every gate error; switch on it without parsing the message.
+            resource:
+              $ref: '#/components/schemas/ErrorResource'
+            unlock:
+              type: object
+              properties:
+                tier:
+                  type: string
+                  description: The plan that lifts the gate.
+                url:
+                  type: string
+                  description: Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim.
+                offer:
+                  type: 'null'
+                  description: Reserved for the agent-discount offer. Always null today.
+                action:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      description: What the call does. send_signup_code sends a verification code to an address for an account key.
+                    method:
+                      type: string
+                      description: HTTP method to use.
+                    url:
+                      type: string
+                      description: Absolute endpoint carrying its ?src= attribution. Call it verbatim.
+                  required:
+                  - kind
+                  - method
+                  - url
+                  description: The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens.
+              required:
+              - tier
+              - url
+              - offer
+              description: How to lift the gate. Present when the gate has an unlock.
+            retry_after_seconds:
+              type: integer
+              description: Present on rate gates. Mirrors the Retry-After header.
+            details:
+              type: object
+              properties:
+                quote:
+                  $ref: '#/components/schemas/RefusedQuote'
+                existing_id:
+                  type: string
+                  description: On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker.
+                limit:
+                  type: integer
+                  description: On tracker_limit, the trackers the plan holds.
+                count:
+                  type: integer
+                  description: On tracker_limit, the trackers the account holds now.
+              description: Machine data the refusal carries for you to act on. Present only on the codes that name a field here.
+            doc_url:
+              type: string
+            request_id:
+              type: string
+          required:
+          - type
+          - code
+          - message
+          - doc_url
+          - request_id
+      required:
+      - error
+      x-arcmira-codes:
+      - code: alert_not_found
+        type: not_found
+        description: A referenced alert row does not exist or belongs to another account.
+      - code: api_not_enabled
+        type: permission_error
+        gate: plan
+        description: The plan does not include API access. unlock.url names the plan that does.
+      - code: appearances_person_only
+        type: invalid_request_error
+        description: Appearance filtering applies to person entities only.
+      - code: channel_not_found
+        type: not_found
+        description: No channel matches the id or slug.
+      - code: email_verification_required
+        type: permission_error
+        description: Verify the account email before adding recipients.
+      - code: entity_not_found
+        type: not_found
+        description: No entity matches the id, slug, or name.
+      - code: feature_not_available
+        type: permission_error
+        gate: plan
+        description: The plan does not include this feature. unlock.url names the plan that does.
+      - code: feedback_not_found
+        type: not_found
+        description: No feedback submission with this id for this account.
+      - code: filter_requires_paid
+        type: permission_error
+        gate: plan
+        description: The parameter in param needs a paid plan; omit it for the free answer.
+      - code: forbidden
+        type: permission_error
+        description: The caller may not perform this operation on this resource.
+      - code: freshness_requires_paid
+        type: permission_error
+        gate: freshness
+        description: The date window is newer than the plan serves; move it before the cutoff or upgrade.
+      - code: id_required
+        type: invalid_request_error
+        description: A filter in param received a name where it takes an id (ent_{n} or UC...). Resolve the name first with GET /v1/entities/resolve and pass best.id or best.youtube_channel_id.
+      - code: idempotency_conflict
+        type: conflict_error
+        description: The Idempotency-Key was sent before with a different request body. Send a new key for a new request.
+      - code: idempotency_result_expired
+        type: conflict_error
+        description: The original one-time signing secret is no longer valid. Use a new request key for a new rotation.
+      - code: insufficient_scope
+        type: permission_error
+        gate: key
+        description: The key lacks the scope this route needs.
+      - code: invalid_api_key
+        type: authentication_error
+        gate: key
+        description: No usable credential. reason says whether none was sent, it is unknown, or it was revoked.
+      - code: invalid_body
+        type: invalid_request_error
+        description: The JSON body failed validation; message names the field.
+      - code: invalid_cursor
+        type: invalid_request_error
+        description: The continuation is invalid, expired, or belongs to another query. Restart without cursor.
+      - code: invalid_email_recipients
+        type: invalid_request_error
+        description: Email recipients failed validation.
+      - code: invalid_feedback_request
+        type: invalid_request_error
+        description: The feedback query or corrections do not fit the feedback type.
+      - code: invalid_idempotency_key
+        type: invalid_request_error
+        description: Idempotency-Key must be 1 to 255 printable ASCII characters (0x21 to 0x7E). param is Idempotency-Key.
+      - code: invalid_query
+        type: invalid_request_error
+        description: A query parameter failed validation; message names it.
+      - code: invalid_slack_integration
+        type: invalid_request_error
+        description: Choose an active Slack integration owned by the account.
+      - code: invalid_video_id
+        type: invalid_request_error
+        description: The video_id path segment is not an 11-character YouTube id.
+      - code: job_requires_account
+        type: authentication_error
+        gate: key
+        description: Transcription jobs belong to an account; sign up for a key.
+      - code: monitor_creation_unavailable
+        type: server_error
+        description: Monitor creation is temporarily unavailable. Retry the same request with the same key.
+      - code: monitor_creation_unconfirmed
+        type: server_error
+        description: Monitor creation could not be confirmed. Retry the same request with the same key.
+      - code: monitor_not_found
+        type: not_found
+        description: No monitor with this id on the account.
+      - code: not_found
+        type: not_found
+        description: No route or resource at this path.
+      - code: owner_only
+        type: permission_error
+        description: Only the team owner may change or test a team monitor's webhook, rotate its secret, or delete it.
+      - code: owner_plan_required
+        type: permission_error
+        description: A team monitor follows the team owner's plan, which does not include this. The owner can upgrade; a member's own plan does not apply.
+      - code: pagination_gated
+        type: permission_error
+        gate: pagination
+        description: Rows past the free window need a paid plan.
+      - code: paid_plan_required
+        type: permission_error
+        description: The operation needs a paid plan. unlock.url names the plan that does.
+      - code: premium_transcript_requested
+        type: permission_error
+        gate: exposure_law
+        description: Premium transcript text needs a plan with Premium transcripts.
+      - code: quota_exceeded
+        type: quota_exceeded
+        gate: rows
+        description: The row pool is spent. unlock.url upgrades or raises the limit.
+      - code: rate_limited
+        type: rate_limit_error
+        gate: rate
+        description: Too many requests in the window. Retry-After carries the wait.
+      - code: recipient_upgrade_required
+        type: permission_error
+        description: The requested email recipient count exceeds the plan allowance.
+      - code: recommendations_not_enabled
+        type: permission_error
+        gate: plan
+        description: Commercial data needs a Pro+ plan.
+      - code: resource_conflict
+        type: conflict_error
+        description: The operation conflicts with existing resource state.
+      - code: scope_too_broad
+        type: invalid_request_error
+        description: The requested exact video scope exceeds the search filename cap; narrow by channel or date.
+      - code: search_unavailable
+        type: server_error
+        description: Transcript search is unavailable (HTTP 503). Retry-After carries the wait.
+      - code: server_error
+        type: server_error
+        description: Unexpected failure. Retry with backoff and quote request_id if it persists.
+      - code: signup_code_invalid
+        type: invalid_request_error
+        description: The signup code is wrong, expired, or spent; message names the attempts left.
+      - code: signup_send_limited
+        type: rate_limit_error
+        description: Verification code sends hit a per-address, per-IP, or per-client cap. Retry-After carries the wait.
+      - code: spend_limit_exceeded
+        type: quota_exceeded
+        description: The purchase would take on-demand spending past the account or seat spend limit this period. Nothing was charged. Raise the limit or wait for the next period, then send a new intent.
+      - code: team_not_found
+        type: not_found
+        description: No team with this id that the caller belongs to.
+      - code: tracker_already_exists
+        type: conflict_error
+        description: The account already tracks this entity. error.details.existing_id identifies the existing tracker.
+      - code: tracker_limit
+        type: permission_error
+        description: The plan's tracker limit is reached. error.details carries limit and count.
+      - code: tracker_not_found
+        type: not_found
+        description: No tracker with this id on the account.
+      - code: transcript_fetching
+        type: server_error
+        description: The caption track is being fetched now (HTTP 503). Retry-After carries the wait; nothing was charged.
+      - code: transcript_requires_account
+        type: authentication_error
+        gate: key
+        description: Full transcripts need an account key; unlock.action sends a signup code.
+      - code: transcript_unavailable
+        type: not_found
+        description: The video has no transcript in the requested lane or language; languages lists what exists.
+      - code: unknown_entity
+        type: invalid_request_error
+        description: An explicit entity_ids value does not resolve to a searchable entity.
+      - code: webhook_not_configured
+        type: conflict_error
+        description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
+    PublicationWindow:
+      type: object
+      properties:
+        after:
+          type:
+          - string
+          - 'null'
+          description: Inclusive start as an ISO instant. Null when the window has no start.
+        before:
+          type:
+          - string
+          - 'null'
+          description: Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window.
+      required:
+      - after
+      - before
+      description: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
+  headers:
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: arc_sk_*
+externalDocs:
+  description: Official Arcmira API documentation
+  url: https://arcmira.com/docs

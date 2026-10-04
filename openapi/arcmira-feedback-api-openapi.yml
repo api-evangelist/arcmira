@@ -1,0 +1,1205 @@
+openapi: 3.2.0
+info:
+  title: Arcmira Feedback API
+  description: 'Search YouTube transcripts for timestamped passages. Find mentions of people, organizations, products and topics; research channel sponsors and recommendations; retrieve creator captions or Premium transcripts with speaker identification; and monitor entities for new mentions. Official API guides: https://arcmira.com/docs. Explicit Premium retrieval can purchase within the account plan and budget.'
+  version: 1.0.0
+  contact:
+    name: Arcmira
+    url: https://arcmira.com
+servers:
+- url: https://api.arcmira.com
+tags:
+- name: Feedback
+paths:
+  /v1/feedback:
+    post:
+      tags:
+      - Feedback
+      operationId: submit_feedback
+      summary: Submit feedback and corrections for a prior API query
+      description: 'Attach corrections to the exact query you ran: pass the feedback type, the query object you sent, and optional per-item corrections. Public submissions are recorded for human review (status "logged"); nothing is auto-applied. Read the review status back later via GET /v1/feedback/{feedback_id}. recommendations and channel_sponsors feedback types require a Pro+ plan; every other type needs read. monitor_alert feedback targets fired alert rows: query carries monitor_id and/or tracker_id and/or alert_id, corrections target the alert row id, and every referenced alert row must belong to the caller (otherwise 404 alert_not_found). missed_alert corrections are expectations with no row to target: omit the correction id and put { source_url, approximate_timestamp_seconds?, entity_id? } in suggested_change. delivery_issue corrections may carry { channel } in suggested_change. experience feedback says how a task went as a whole rather than correcting a row: it requires category and notes, refuses corrections (400 invalid_feedback_request), and needs no query. category and mcp_call_id, when sent, are recorded in the stored query.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - recommendations
+          - channel_sponsors
+          - mentions
+          - entities_search
+          - entities
+          - channels
+          - monitor_alert
+          - appearances
+          - search
+          - experience
+          description: Feedback type when omitted from the JSON body. Provide type in either location; the body takes precedence.
+        required: false
+        description: Feedback type when omitted from the JSON body. Provide type in either location; the body takes precedence.
+        name: type
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Query being reviewed when omitted from the JSON body. Body query fields override matching query-string fields.
+        required: false
+        description: Query being reviewed when omitted from the JSON body. Body query fields override matching query-string fields.
+        name: query
+        in: query
+      - schema:
+          type: string
+        required: false
+        name: Idempotency-Key
+        in: header
+        example: 8b2f6c3e-4d1a-4e7b-9c05-2f6a1b7d3e90
+        description: '1 to 255 printable ASCII characters (0x21 to 0x7E); anything else is 400 invalid_idempotency_key. Persist a unique key and the exact request before sending a logical mutation. A retry returns its stored response with Idempotency-Replayed: true. A changed intent under a finalized key returns 409 idempotency_conflict. Keys belong to the authenticated owner, credential and mutation domain. Current authorization still applies. Receipts have no general 24-hour expiry; signing-secret recovery alone expires after 24 hours or when the secret is displaced.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - recommendations
+                  - channel_sponsors
+                  - mentions
+                  - entities_search
+                  - entities
+                  - channels
+                  - monitor_alert
+                  - appearances
+                  - search
+                  - experience
+                  description: 'The surface being reviewed. Values: recommendations (/v1/recommendations rows by com_* id; requires a Pro+ plan), channel_sponsors (sponsor entities on a channel; requires a Pro+ plan), mentions (/v1/mentions rows by men_* id), entities_search (/v1/entities/resolve candidates), entities (/v1/entities/{id} payloads), channels (/v1/channels/{channel_id}/videos rows), monitor_alert (fired alert rows from /v1/monitors/{id}/alerts or /v1/trackers/{id}/alerts; corrections target the alert row id), appearances (person appearance rows from /v1/mentions with is_appearance=true), search (/v1/search passages), experience (how a task went as a whole, not one row: requires category and notes, takes no corrections, and query is optional).'
+                query:
+                  type: object
+                  additionalProperties: {}
+                  description: The query object that produced the result you are reviewing, echoed back verbatim so reviewers can replay it. For monitor_alert feedback, carry monitor_id and/or tracker_id and/or alert_id.
+                endpoint:
+                  type: string
+                  maxLength: 500
+                method:
+                  type: string
+                  enum:
+                  - GET
+                  - POST
+                  - PATCH
+                  - PUT
+                  - DELETE
+                request_id:
+                  type: string
+                  maxLength: 200
+                result_url:
+                  type: string
+                  maxLength: 2000
+                source_url:
+                  type: string
+                  maxLength: 2000
+                notes:
+                  type: string
+                  maxLength: 4000
+                  description: 'Free text for the reviewer. Required when type is experience: say what the user asked for and what went wrong, slow, or missing.'
+                corrections:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 1
+                        description: 'Public id of the row being corrected, from the response you received: men_* (mentions, appearances), com_* (recommendations), ent_* (entities, sponsors), or the alert row id (monitor_alert). Omit for missed_alert and missing_result corrections, which have no row to target.'
+                      class:
+                        type: string
+                        enum:
+                        - sponsored
+                        - organic
+                        - mention
+                        description: 'On recommendations feedback, the class the row should carry. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
+                      reason:
+                        type: string
+                        enum:
+                        - false_positive_ad_read
+                        - false_positive_endorsement
+                        - missed_ad_read
+                        - missed_endorsement
+                        - wrong_classification
+                        - wrong_entity
+                        - other
+                      issue_type:
+                        type: string
+                        enum:
+                        - wrong_entity_type
+                        - wrong_entity
+                        - duplicate_entity
+                        - merge_suggestion
+                        - missing_result
+                        - stale_metadata
+                        - wrong_classification
+                        - bad_ranking
+                        - false_positive_alert
+                        - wrong_media
+                        - wrong_timestamp
+                        - duplicate_alert
+                        - missed_alert
+                        - delivery_issue
+                        - person_not_present
+                        - wrong_person
+                        - wrong_appearance_role
+                        - other
+                        description: 'Issue classification for the correction. Entity-family values: wrong_entity_type (right entity, wrong type), wrong_entity (the row points at the wrong canonical entity), duplicate_entity (results split across variants of the same entity), merge_suggestion (propose the canonical merge for split variants), missing_result (a result you know should exist is absent), stale_metadata (name/website/channel metadata is outdated), wrong_classification (class-level error on a commercial row), bad_ranking (duplicates or aliases ranking above the canonical entity). monitor_alert values: false_positive_alert (the alert should not have fired), wrong_media (fired against the wrong video), wrong_timestamp (fired at the wrong position in the video), duplicate_alert (the same occurrence fired more than once), missed_alert (an expectation: an alert that should have fired but did not; no row to target), delivery_issue (the delivery itself was wrong: wrong channel, not received). appearances values: person_not_present (the person does not appear in the media), wrong_person (the appearance is attributed to the wrong person), wrong_appearance_role (right person, wrong role, e.g. guest vs host). other (escape hatch; detail in notes).'
+                      suggested_change:
+                        anyOf:
+                        - $ref: '#/components/schemas/MergeSuggestionChange'
+                        - $ref: '#/components/schemas/WrongEntityChange'
+                        - $ref: '#/components/schemas/WrongEntityTypeChange'
+                        - $ref: '#/components/schemas/MissingResultChange'
+                        - $ref: '#/components/schemas/WrongClassificationChange'
+                        - $ref: '#/components/schemas/StaleMetadataChange'
+                        - $ref: '#/components/schemas/BadRankingChange'
+                        - $ref: '#/components/schemas/MissedAlertChange'
+                        - $ref: '#/components/schemas/DeliveryIssueChange'
+                        - $ref: '#/components/schemas/FreeformSuggestedChange'
+                        description: 'Your concrete proposed fix, shaped by issue_type: merge_suggestion → MergeSuggestionChange, wrong_entity/wrong_person → WrongEntityChange, wrong_entity_type → WrongEntityTypeChange, missing_result → MissingResultChange, wrong_classification → WrongClassificationChange, stale_metadata → StaleMetadataChange, bad_ranking → BadRankingChange, missed_alert → MissedAlertChange, delivery_issue → DeliveryIssueChange. Unknown keys are accepted and logged verbatim; only non-object values are rejected. Omit suggested_change entirely when you do not have a concrete fix.'
+                      notes:
+                        type: string
+                        maxLength: 2000
+                  maxItems: 100
+                  description: Per-row corrections. Not allowed when type is experience.
+                category:
+                  type: string
+                  enum:
+                  - wrong_entity
+                  - bad_data
+                  - missing
+                  - slow
+                  - confusing
+                  - other
+                  description: 'What kind of problem this is. Values: wrong_entity (a name resolved to the wrong person, company or thing), bad_data (a row or field is wrong), missing (something that should exist was not found), slow (the task took too long), confusing (the answer or an error was hard to act on), other (anything else; say what in notes). Required when type is experience.'
+                mcp_call_id:
+                  type: string
+                  pattern: ^mcpc_[0-9a-f]{32}$
+                  description: The MCP tool call this feedback is about, as the Arcmira MCP server names it (mcpc_ and 32 hex digits). Joins the feedback to that call in product analytics.
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict. idempotency_conflict means the Idempotency-Key was finalized with a different request intent.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/feedback/{feedback_id}:
+    get:
+      tags:
+      - Feedback
+      operationId: get_feedback
+      summary: Read back a feedback submission and its review status
+      description: 'Returns the submission (id, type, query, notes, created_at) plus its per-correction rows, each with a review status in the public vocabulary: pending_review, needs_information, accepted, accepted_with_changes, rejected, withdrawn, applied, reverted (accepted means a reviewer agreed; applied means the change is live in the index). Only the submitting user''s keys can read a submission; unknown ids and other users'' submissions both return 404 (never 403).'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: The feedback submission id POST /v1/feedback returned, fbk_ and digits.
+        required: true
+        description: The feedback submission id POST /v1/feedback returned, fbk_ and digits.
+        name: feedback_id
+        in: path
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackReadbackResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  schemas:
+    WrongEntityTypeChange:
+      type: object
+      properties:
+        field:
+          type: string
+          enum:
+          - type
+          description: Always "type".
+        value:
+          type: string
+          description: 'The correct entity type: person, organization, product, topic, or channel.'
+      additionalProperties: {}
+      description: 'For issue_type wrong_entity_type: { "field": "type", "value": "organization" }.'
+    FreeformSuggestedChange:
+      type: object
+      additionalProperties: {}
+      description: Any other object shape. Accepted and logged verbatim for human review; prefer the typed shapes above when one fits your issue_type.
+    ErrorResource:
+      oneOf:
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - media_rows
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - fresh_media
+          window_days:
+            type: integer
+          cutoff:
+            type:
+            - string
+            - 'null'
+        required:
+        - kind
+        - window_days
+        - cutoff
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - sidebar_rows
+          section:
+            type: string
+            enum:
+            - topics
+            - entities
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - section
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - counts
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - chart
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - pagination
+          param:
+            type:
+            - string
+            - 'null'
+            enum:
+            - offset
+            - cursor
+            - null
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - premium_transcript
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - filter
+          param:
+            type: string
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - commercial
+          what:
+            type: string
+            enum:
+            - sponsors
+            - recommendations
+            - mention_details
+            - community_review
+            - paid_split
+        required:
+        - kind
+        - what
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - feature
+          feature:
+            type: string
+            enum:
+            - api
+            - export
+        required:
+        - kind
+        - feature
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - rows
+          requested:
+            type:
+            - integer
+            - 'null'
+          remaining:
+            type:
+            - integer
+            - 'null'
+        required:
+        - kind
+        - requested
+        - remaining
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - key
+          scope:
+            type:
+            - string
+            - 'null'
+            enum:
+            - read
+            - monitors:write
+            - trackers:write
+            - recommendations:read
+            - null
+        required:
+        - kind
+        - scope
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - requests
+        required:
+        - kind
+      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
+    FeedbackCorrectionResult:
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: The correction target id you supplied (or a generated placeholder when omitted).
+        item_kind:
+          type: string
+          description: 'Inferred kind of the target. Values include: recommendation, sponsor_entity, entity, entity_merge, mention, appearance, alert, alert_expectation, unknown.'
+        status:
+          type: string
+          enum:
+          - applied
+          - unchanged
+          - not_found
+          - invalid
+          - logged
+          description: 'Outcome. Values: applied (the correction was applied automatically), unchanged (the target already had the requested value), not_found (the target does not exist), invalid (the correction payload was malformed for its kind), logged (recorded for human review; no automatic apply).'
+        reason:
+          type: string
+          description: The reason code you supplied, echoed back.
+        message:
+          type: string
+          description: Human-readable explanation of the outcome.
+      required:
+      - item_id
+      - item_kind
+      - status
+    MissingResultChange:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the missing entity or result.
+        entity_type:
+          type: string
+          description: 'Type of the missing entity: person, organization, product, topic, or channel.'
+        source_url:
+          type: string
+          description: URL evidencing the missing result (video, channel, or article).
+      additionalProperties: {}
+      description: 'For issue_type missing_result: what should have been returned. Put video/channel/timestamp context in notes.'
+    MergeSuggestionChange:
+      type: object
+      properties:
+        source_entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the duplicate/variant entity to merge away.
+        target_entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the canonical entity to merge into.
+        source_name:
+          type: string
+          description: Name of the duplicate entity when you do not have its id.
+        merge_into:
+          type: string
+          description: Name or public id of the canonical entity when you do not have target_entity_id.
+        scope_type:
+          type: string
+          description: Scope of the merge rule, e.g. "global".
+      additionalProperties: {}
+      description: 'For issue_type merge_suggestion (and duplicate_entity): the canonical merge you are proposing. Provide ids when you have them, names otherwise.'
+    BadRankingChange:
+      type: object
+      properties:
+        expected_rank:
+          type: integer
+          description: Where the row should have ranked (1-based).
+        observed_rank:
+          type: integer
+          description: Where the row actually ranked (1-based). Most useful on search feedback.
+      additionalProperties: {}
+      description: 'For issue_type bad_ranking: the expected and observed positions of the row.'
+    StaleMetadataChange:
+      type: object
+      properties:
+        field:
+          type: string
+          description: The metadata field that is outdated, e.g. "website" or "name".
+        value:
+          description: The current, correct value.
+        source_url:
+          type: string
+          description: URL evidencing the correct value.
+      additionalProperties: {}
+      description: 'For issue_type stale_metadata: the field and its correct value, with a source URL when you have one.'
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - permission_error
+              - quota_exceeded
+              - rate_limit_error
+              - not_found
+              - conflict_error
+              - server_error
+              description: 'The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling.'
+            code:
+              type: string
+              description: 'The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first.'
+            reason:
+              type: string
+              enum:
+              - no_credential
+              - invalid
+              - revoked
+              description: 'Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable.'
+            message:
+              type: string
+              description: One plain line. Names the fix or the unlock.
+            param:
+              type: string
+              description: The query or body parameter the gate refused, when one did.
+            gate:
+              type: string
+              enum:
+              - rows
+              - key
+              - plan
+              - freshness
+              - exposure_law
+              - rate
+              - pagination
+              description: Which boundary refused. Present on every gate error; switch on it without parsing the message.
+            resource:
+              $ref: '#/components/schemas/ErrorResource'
+            unlock:
+              type: object
+              properties:
+                tier:
+                  type: string
+                  description: The plan that lifts the gate.
+                url:
+                  type: string
+                  description: Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim.
+                offer:
+                  type: 'null'
+                  description: Reserved for the agent-discount offer. Always null today.
+                action:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      description: What the call does. send_signup_code sends a verification code to an address for an account key.
+                    method:
+                      type: string
+                      description: HTTP method to use.
+                    url:
+                      type: string
+                      description: Absolute endpoint carrying its ?src= attribution. Call it verbatim.
+                  required:
+                  - kind
+                  - method
+                  - url
+                  description: The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens.
+              required:
+              - tier
+              - url
+              - offer
+              description: How to lift the gate. Present when the gate has an unlock.
+            retry_after_seconds:
+              type: integer
+              description: Present on rate gates. Mirrors the Retry-After header.
+            details:
+              type: object
+              properties:
+                quote:
+                  $ref: '#/components/schemas/RefusedQuote'
+                existing_id:
+                  type: string
+                  description: On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker.
+                limit:
+                  type: integer
+                  description: On tracker_limit, the trackers the plan holds.
+                count:
+                  type: integer
+                  description: On tracker_limit, the trackers the account holds now.
+              description: Machine data the refusal carries for you to act on. Present only on the codes that name a field here.
+            doc_url:
+              type: string
+            request_id:
+              type: string
+          required:
+          - type
+          - code
+          - message
+          - doc_url
+          - request_id
+      required:
+      - error
+      x-arcmira-codes:
+      - code: alert_not_found
+        type: not_found
+        description: A referenced alert row does not exist or belongs to another account.
+      - code: api_not_enabled
+        type: permission_error
+        gate: plan
+        description: The plan does not include API access. unlock.url names the plan that does.
+      - code: appearances_person_only
+        type: invalid_request_error
+        description: Appearance filtering applies to person entities only.
+      - code: channel_not_found
+        type: not_found
+        description: No channel matches the id or slug.
+      - code: email_verification_required
+        type: permission_error
+        description: Verify the account email before adding recipients.
+      - code: entity_not_found
+        type: not_found
+        description: No entity matches the id, slug, or name.
+      - code: feature_not_available
+        type: permission_error
+        gate: plan
+        description: The plan does not include this feature. unlock.url names the plan that does.
+      - code: feedback_not_found
+        type: not_found
+        description: No feedback submission with this id for this account.
+      - code: filter_requires_paid
+        type: permission_error
+        gate: plan
+        description: The parameter in param needs a paid plan; omit it for the free answer.
+      - code: forbidden
+        type: permission_error
+        description: The caller may not perform this operation on this resource.
+      - code: freshness_requires_paid
+        type: permission_error
+        gate: freshness
+        description: The date window is newer than the plan serves; move it before the cutoff or upgrade.
+      - code: id_required
+        type: invalid_request_error
+        description: A filter in param received a name where it takes an id (ent_{n} or UC...). Resolve the name first with GET /v1/entities/resolve and pass best.id or best.youtube_channel_id.
+      - code: idempotency_conflict
+        type: conflict_error
+        description: The Idempotency-Key was sent before with a different request body. Send a new key for a new request.
+      - code: idempotency_result_expired
+        type: conflict_error
+        description: The original one-time signing secret is no longer valid. Use a new request key for a new rotation.
+      - code: insufficient_scope
+        type: permission_error
+        gate: key
+        description: The key lacks the scope this route needs.
+      - code: invalid_api_key
+        type: authentication_error
+        gate: key
+        description: No usable credential. reason says whether none was sent, it is unknown, or it was revoked.
+      - code: invalid_body
+        type: invalid_request_error
+        description: The JSON body failed validation; message names the field.
+      - code: invalid_cursor
+        type: invalid_request_error
+        description: The continuation is invalid, expired, or belongs to another query. Restart without cursor.
+      - code: invalid_email_recipients
+        type: invalid_request_error
+        description: Email recipients failed validation.
+      - code: invalid_feedback_request
+        type: invalid_request_error
+        description: The feedback query or corrections do not fit the feedback type.
+      - code: invalid_idempotency_key
+        type: invalid_request_error
+        description: Idempotency-Key must be 1 to 255 printable ASCII characters (0x21 to 0x7E). param is Idempotency-Key.
+      - code: invalid_query
+        type: invalid_request_error
+        description: A query parameter failed validation; message names it.
+      - code: invalid_slack_integration
+        type: invalid_request_error
+        description: Choose an active Slack integration owned by the account.
+      - code: invalid_video_id
+        type: invalid_request_error
+        description: The video_id path segment is not an 11-character YouTube id.
+      - code: job_requires_account
+        type: authentication_error
+        gate: key
+        description: Transcription jobs belong to an account; sign up for a key.
+      - code: monitor_creation_unavailable
+        type: server_error
+        description: Monitor creation is temporarily unavailable. Retry the same request with the same key.
+      - code: monitor_creation_unconfirmed
+        type: server_error
+        description: Monitor creation could not be confirmed. Retry the same request with the same key.
+      - code: monitor_not_found
+        type: not_found
+        description: No monitor with this id on the account.
+      - code: not_found
+        type: not_found
+        description: No route or resource at this path.
+      - code: owner_only
+        type: permission_error
+        description: Only the team owner may change or test a team monitor's webhook, rotate its secret, or delete it.
+      - code: owner_plan_required
+        type: permission_error
+        description: A team monitor follows the team owner's plan, which does not include this. The owner can upgrade; a member's own plan does not apply.
+      - code: pagination_gated
+        type: permission_error
+        gate: pagination
+        description: Rows past the free window need a paid plan.
+      - code: paid_plan_required
+        type: permission_error
+        description: The operation needs a paid plan. unlock.url names the plan that does.
+      - code: premium_transcript_requested
+        type: permission_error
+        gate: exposure_law
+        description: Premium transcript text needs a plan with Premium transcripts.
+      - code: quota_exceeded
+        type: quota_exceeded
+        gate: rows
+        description: The row pool is spent. unlock.url upgrades or raises the limit.
+      - code: rate_limited
+        type: rate_limit_error
+        gate: rate
+        description: Too many requests in the window. Retry-After carries the wait.
+      - code: recipient_upgrade_required
+        type: permission_error
+        description: The requested email recipient count exceeds the plan allowance.
+      - code: recommendations_not_enabled
+        type: permission_error
+        gate: plan
+        description: Commercial data needs a Pro+ plan.
+      - code: resource_conflict
+        type: conflict_error
+        description: The operation conflicts with existing resource state.
+      - code: scope_too_broad
+        type: invalid_request_error
+        description: The requested exact video scope exceeds the search filename cap; narrow by channel or date.
+      - code: search_unavailable
+        type: server_error
+        description: Transcript search is unavailable (HTTP 503). Retry-After carries the wait.
+      - code: server_error
+        type: server_error
+        description: Unexpected failure. Retry with backoff and quote request_id if it persists.
+      - code: signup_code_invalid
+        type: invalid_request_error
+        description: The signup code is wrong, expired, or spent; message names the attempts left.
+      - code: signup_send_limited
+        type: rate_limit_error
+        description: Verification code sends hit a per-address, per-IP, or per-client cap. Retry-After carries the wait.
+      - code: spend_limit_exceeded
+        type: quota_exceeded
+        description: The purchase would take on-demand spending past the account or seat spend limit this period. Nothing was charged. Raise the limit or wait for the next period, then send a new intent.
+      - code: team_not_found
+        type: not_found
+        description: No team with this id that the caller belongs to.
+      - code: tracker_already_exists
+        type: conflict_error
+        description: The account already tracks this entity. error.details.existing_id identifies the existing tracker.
+      - code: tracker_limit
+        type: permission_error
+        description: The plan's tracker limit is reached. error.details carries limit and count.
+      - code: tracker_not_found
+        type: not_found
+        description: No tracker with this id on the account.
+      - code: transcript_fetching
+        type: server_error
+        description: The caption track is being fetched now (HTTP 503). Retry-After carries the wait; nothing was charged.
+      - code: transcript_requires_account
+        type: authentication_error
+        gate: key
+        description: Full transcripts need an account key; unlock.action sends a signup code.
+      - code: transcript_unavailable
+        type: not_found
+        description: The video has no transcript in the requested lane or language; languages lists what exists.
+      - code: unknown_entity
+        type: invalid_request_error
+        description: An explicit entity_ids value does not resolve to a searchable entity.
+      - code: webhook_not_configured
+        type: conflict_error
+        description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
+    WrongClassificationChange:
+      type: object
+      properties:
+        class:
+          type: string
+          enum:
+          - sponsored
+          - organic
+          - mention
+          description: 'The correct commercial class. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
+      additionalProperties: {}
+      description: 'For issue_type wrong_classification: the commercial class the row should carry.'
+    FeedbackResponse:
+      type: object
+      properties:
+        feedback_id:
+          type: string
+          description: Id of the persisted feedback record, fbk_ and digits. Read it back via GET /v1/feedback/{feedback_id}.
+        type:
+          type: string
+          description: 'The feedback type you submitted. Values: recommendations, channel_sponsors, mentions, entities_search, entities, channels, monitor_alert, appearances, search, experience.'
+        query:
+          type: object
+          additionalProperties: {}
+          description: The query object the feedback is attached to, echoed back. category and mcp_call_id, when sent, are recorded in it under those names.
+        applied:
+          type: integer
+          description: 'Count of corrections applied automatically. CURRENTLY always 0: public submissions are logged for review, never auto-applied.'
+        unchanged:
+          type: integer
+          description: Count of corrections whose target already had the requested value. Currently always 0 for public submissions.
+        failed:
+          type: integer
+          description: Count of corrections that could not be processed. Currently always 0 for public submissions.
+        logged:
+          type: integer
+          description: Count of corrections recorded for human review.
+        corrections:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackCorrectionResult'
+          description: Per-correction outcomes, in submission order.
+      required:
+      - feedback_id
+      - type
+      - query
+      - applied
+      - unchanged
+      - failed
+      - logged
+      - corrections
+    MissedAlertChange:
+      type: object
+      properties:
+        source_url:
+          type: string
+          description: URL of the media that should have produced an alert.
+        approximate_timestamp_seconds:
+          type: number
+          description: Approximate position of the missed occurrence, in seconds from the start of the media.
+        entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the tracked entity the missed alert concerns.
+      required:
+      - source_url
+      additionalProperties: {}
+      description: 'For issue_type missed_alert: an expectation with no alert row to target. Omit the correction id and describe where the alert should have fired.'
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    WrongEntityChange:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the entity the row should point at.
+        entity_name:
+          type: string
+          description: Name of the correct entity when you do not have its id.
+        entity_type:
+          type: string
+          description: 'Type of the correct entity: person, organization, product, topic, or channel.'
+      additionalProperties: {}
+      description: 'For issue_type wrong_entity (and wrong_person): the entity the row should have been attributed to.'
+    FeedbackReadbackCorrection:
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: The correction target id as submitted (or a generated placeholder when omitted).
+        item_kind:
+          type: string
+          description: 'Inferred kind of the target. Values include: recommendation, sponsor_entity, entity, entity_merge, mention, appearance, alert, alert_expectation, unknown.'
+        issue_type:
+          type:
+          - string
+          - 'null'
+          description: The issue_type as submitted. Null when the correction carried only a reason or class.
+        reason:
+          type:
+          - string
+          - 'null'
+          description: The commercial reason code as submitted. Null unless the correction was a commercial-class dispute.
+        suggested_change:
+          type:
+          - object
+          - 'null'
+          additionalProperties: {}
+          description: The suggested_change object as submitted. Null when none was supplied.
+        notes:
+          type:
+          - string
+          - 'null'
+          description: The per-correction notes as submitted. Null when none were supplied.
+        status:
+          type: string
+          enum:
+          - pending_review
+          - needs_information
+          - accepted
+          - accepted_with_changes
+          - rejected
+          - withdrawn
+          - applied
+          - reverted
+          description: 'Review status in the public vocabulary. Values: pending_review (submitted; a reviewer has not finished with it), needs_information (a reviewer needs more detail from you; add context in a support thread quoting the feedback_id), accepted (the correction was accepted as submitted), accepted_with_changes (accepted, but the reviewer resolved it differently than proposed), rejected (reviewed and declined), withdrawn (withdrawn by the submitter before review), applied (the accepted change is live in the index; accepted does not imply applied), reverted (a previously applied change was rolled back).'
+        resolution_note:
+          type:
+          - string
+          - 'null'
+          description: Reviewer-written public note about how the correction was resolved. Null until a reviewer leaves one.
+        created_at:
+          type:
+          - string
+          - 'null'
+          description: When the correction row was created.
+      required:
+      - item_id
+      - item_kind
+      - issue_type
+      - reason
+      - suggested_change
+      - notes
+      - status
+      - resolution_note
+      - created_at
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
+    FeedbackReadbackResponse:
+      type: object
+      properties:
+        feedback_id:
+          type: string
+          description: Id of the feedback record, fbk_ and digits.
+        type:
+          type: string
+          description: 'The feedback type as submitted. Values: recommendations, channel_sponsors, mentions, entities_search, entities, channels, monitor_alert, appearances, search, experience.'
+        status:
+          type: string
+          enum:
+          - pending_review
+          - needs_information
+          - accepted
+          - accepted_with_changes
+          - rejected
+          - withdrawn
+          - applied
+          - reverted
+          description: 'Submission-level rollup of the per-correction statuses. Review status in the public vocabulary. Values: pending_review (submitted; a reviewer has not finished with it), needs_information (a reviewer needs more detail from you; add context in a support thread quoting the feedback_id), accepted (the correction was accepted as submitted), accepted_with_changes (accepted, but the reviewer resolved it differently than proposed), rejected (reviewed and declined), withdrawn (withdrawn by the submitter before review), applied (the accepted change is live in the index; accepted does not imply applied), reverted (a previously applied change was rolled back).'
+        query:
+          type: object
+          additionalProperties: {}
+          description: The query object the feedback was attached to, as submitted.
+        notes:
+          type:
+          - string
+          - 'null'
+          description: The top-level notes as submitted. Null when none were supplied.
+        created_at:
+          type:
+          - string
+          - 'null'
+          description: When the submission was created.
+        corrections:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackReadbackCorrection'
+          description: Per-correction rows with their individual review statuses, in submission order.
+      required:
+      - feedback_id
+      - type
+      - status
+      - query
+      - notes
+      - created_at
+      - corrections
+    DeliveryIssueChange:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum:
+          - email
+          - webhook
+          - slack
+          description: 'The delivery channel the issue concerns. Values: email, webhook, slack.'
+      required:
+      - channel
+      additionalProperties: {}
+      description: 'For issue_type delivery_issue: targets the delivery row (the correction id) and names the channel that was wrong or never received.'
+  responses:
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  headers:
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+    Idempotency-Replayed:
+      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
+      schema:
+        type: string
+        enum:
+        - 'true'
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: arc_sk_*
+externalDocs:
+  description: Official Arcmira API documentation
+  url: https://arcmira.com/docs

@@ -108,18 +108,16 @@ apis:
   baseURL: https://api.arcmira.com
   properties: []
   aid: arcmira:arcmira-api
-- aid: arcmira:arcmira-api-v1-api
-  name: Arcmira API V1 API
-  description: 'Search YouTube transcripts for timestamped passages. Find mentions of people, organizations, products and topics; research channel
-
-    sponsors and recommendations; retrieve creator captions or Premium transcripts with speaker identification; and monitor entities for new mentions.
-
-    Official API guides: h'
-  humanURL: https://arcmira.com/docs/api-reference/search/retrieve-spoken-transcript-slices-for-one-topic
+- aid: arcmira:arcmira-channels-api
+  name: Arcmira Channels API
+  description: The Channels API from Arcmira — 2 operation(s) for channels.
+  humanURL: https://arcmira.com/docs
   baseURL: https://api.arcmira.com
+  tags:
+  - Channels
   properties:
   - type: OpenAPI
-    url: openapi/_original/arcmira-v1-openapi.json
+    url: openapi/arcmira-channels-api-openapi.yml
   - type: JSONSchema
     url: json-schema/arcmira-transcript-response-schema.json
   - type: JSONSchema
@@ -132,7 +130,226 @@ apis:
     url: json-schema/arcmira-channel-sponsors-response-schema.json
   - type: JSONSchema
     url: json-schema/arcmira-me-response-schema.json
-
+- aid: arcmira:arcmira-entities-api
+  name: Arcmira Entities API
+  description: The Entities API from Arcmira — 3 operation(s) for entities.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Entities
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-entities-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-feedback-api
+  name: Arcmira Feedback API
+  description: The Feedback API from Arcmira — 2 operation(s) for feedback.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Feedback
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-feedback-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-mentions-api
+  name: Arcmira Mentions API
+  description: The Mentions API from Arcmira — 2 operation(s) for mentions.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Mentions
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-mentions-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-meta-api
+  name: Arcmira Meta API
+  description: The Meta API from Arcmira — 6 operation(s) for meta.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Meta
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-meta-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-monitors-api
+  name: Arcmira Monitors API
+  description: The Monitors API from Arcmira — 7 operation(s) for monitors.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Monitors
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-monitors-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-recommendations-api
+  name: Arcmira Recommendations API
+  description: The Recommendations API from Arcmira — 2 operation(s) for recommendations.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Recommendations
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-recommendations-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-search-api
+  name: Arcmira Search API
+  description: The Search API from Arcmira — 1 operation(s) for search.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Search
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-search-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-trackers-api
+  name: Arcmira Trackers API
+  description: The Trackers API from Arcmira — 3 operation(s) for trackers.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Trackers
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-trackers-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-transcriptions-api
+  name: Arcmira Transcriptions API
+  description: The Transcriptions API from Arcmira — 1 operation(s) for transcriptions.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Transcriptions
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-transcriptions-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
+- aid: arcmira:arcmira-transcripts-api
+  name: Arcmira Transcripts API
+  description: The Transcripts API from Arcmira — 2 operation(s) for transcripts.
+  humanURL: https://arcmira.com/docs
+  baseURL: https://api.arcmira.com
+  tags:
+  - Transcripts
+  properties:
+  - type: OpenAPI
+    url: openapi/arcmira-transcripts-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-transcript-search-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-entity-momentum-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-mention-counts-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-channel-sponsors-response-schema.json
+  - type: JSONSchema
+    url: json-schema/arcmira-me-response-schema.json
 x-submission-notes: 'Searches indexed YouTube/podcast transcripts for timestamped passages, people/topic mentions, sponsors and ad reads, with
   JS/Python SDKs, CLI and an OAuth remote MCP. | Submitted twice (Arcmira; Arcmira: YouTube Transcript Search) - one company. Listed on Kin call
   2026-10-03.'

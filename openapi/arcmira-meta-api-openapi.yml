@@ -1,0 +1,1249 @@
+openapi: 3.2.0
+info:
+  title: Arcmira Meta API
+  description: 'Search YouTube transcripts for timestamped passages. Find mentions of people, organizations, products and topics; research channel sponsors and recommendations; retrieve creator captions or Premium transcripts with speaker identification; and monitor entities for new mentions. Official API guides: https://arcmira.com/docs. Explicit Premium retrieval can purchase within the account plan and budget.'
+  version: 1.0.0
+  contact:
+    name: Arcmira
+    url: https://arcmira.com
+servers:
+- url: https://api.arcmira.com
+tags:
+- name: Meta
+paths:
+  /v1/health:
+    get:
+      tags:
+      - Meta
+      operationId: get_health
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Rate limit exceeded. Retry-After carries the wait.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            Retry-After:
+              $ref: '#/components/headers/Retry-After'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/openapi.json:
+    get:
+      tags:
+      - Meta
+      operationId: get_openapi_document
+      summary: OpenAPI document
+      security: []
+      responses:
+        '200':
+          description: This OpenAPI 3.1 document.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiDocument'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          description: Rate limit exceeded. Retry-After carries the wait.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            Retry-After:
+              $ref: '#/components/headers/Retry-After'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/me:
+    get:
+      tags:
+      - Meta
+      operationId: get_me
+      summary: Current API key context
+      description: 'Available even when the account has exhausted its usage allowance. Returns the credential making the request (key_id, key_label, credential_kind), the masked account email, the tier, scopes, rate limit, row usage with period_resets_at, and account settings. settings.transcripts is what a transcript request that names no parameter of its own receives: every key of the account resolves against it.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/me/settings:
+    patch:
+      tags:
+      - Meta
+      operationId: update_my_settings
+      summary: Set account defaults
+      description: 'Sets the account defaults every key of the account resolves against. Send only the fields you are changing; an omitted field keeps the value it has. Resolution order for every transcript request is the explicit parameter, then these settings, then the platform default, so a default never overrides a parameter the caller sent. Defaults live on the account, never on a key: two keys of one account answer the same request the same way. The response echoes the resolved settings.'
+      security:
+      - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transcripts:
+                  type: object
+                  properties:
+                    quality:
+                      type: string
+                      enum:
+                      - captions
+                      - premium
+                      description: 'Default transcript quality for this account: captions or premium. premium reads require an existing purchase. Owned transcripts remain readable after a plan downgrade; new purchases require an eligible plan.'
+                    language:
+                      type: string
+                      description: Default comma-separated caption language priority list, tried in order (e.g. "de,en"), at most 5 codes. Use asr for the first automatic track and asr-<code> for a specific one.
+                    timestamps:
+                      type: boolean
+                      description: Default for the timestamps parameter. false makes paragraphs[] the default body shape instead of lines[].
+                  description: Fields to change. An omitted field keeps the value the account already carries.
+              required:
+              - transcripts
+      responses:
+        '200':
+          description: Settings updated
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeSettingsResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/signups:
+    post:
+      tags:
+      - Meta
+      operationId: create_signup
+      summary: Send a verification code to an address
+      description: 'Starts the signup that ends in an account key, with no key and no login. Sends a 6 digit code to the address, valid for 10 minutes and 5 attempts, and answers 202 with the verify call. Sends are capped at 3 per address per hour, 10 per IP per hour, and 25 per client fingerprint per day; past a cap the response is 429 signup_send_limited with retry_after_seconds and an unlock whose action is this call. An address that already has an account gets a code too; verifying it mints a key on that account. Send { "email": "agent@example.com" }, with an optional "src" naming the surface that sent you.'
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  maxLength: 254
+                  description: The address the verification code is sent to. Case is folded; the same address in any casing is one account and one send budget.
+                src:
+                  type: string
+                  maxLength: 32
+                  description: The agent surface that sent you, as a value from the ?src= registry. Also accepted as ?src= on the URL. The unlock in a refusal carries it back.
+              required:
+              - email
+      responses:
+        '202':
+          description: Code sent
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupSentResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          description: Rate limit exceeded. Retry-After carries the wait.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            Retry-After:
+              $ref: '#/components/headers/Retry-After'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          description: server_error. The verification email could not be sent. Retry-After carries the wait.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            Retry-After:
+              $ref: '#/components/headers/Retry-After'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/signups/verify:
+    post:
+      tags:
+      - Meta
+      operationId: verify_signup
+      summary: Exchange a verification code for an account key
+      description: 'Consumes the code POST /v1/signups sent, creates the account when the address has none, and mints an arc_sk_ key on it: the read scope, the free tier''s lifetime row pool, no expiry. A wrong, expired, or spent code is 400 signup_code_invalid on param code, naming the attempts left; its unlock action is a new send. Send { "email": "agent@example.com", "code": "482913" }.'
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  maxLength: 254
+                  description: The address the code was sent to.
+                code:
+                  type: string
+                  pattern: ^\d+$
+                  description: The six digit code from the email. Ten minutes, five attempts, then a new send is required.
+              required:
+              - email
+              - code
+      responses:
+        '201':
+          description: Account key minted
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupVerifiedResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          description: Rate limit exceeded. Retry-After carries the wait.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            Retry-After:
+              $ref: '#/components/headers/Retry-After'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  responses:
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    MeSettingsResponse:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/AccountSettings'
+      required:
+      - settings
+    ErrorResource:
+      oneOf:
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - media_rows
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - fresh_media
+          window_days:
+            type: integer
+          cutoff:
+            type:
+            - string
+            - 'null'
+        required:
+        - kind
+        - window_days
+        - cutoff
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - sidebar_rows
+          section:
+            type: string
+            enum:
+            - topics
+            - entities
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - section
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - counts
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - chart
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - pagination
+          param:
+            type:
+            - string
+            - 'null'
+            enum:
+            - offset
+            - cursor
+            - null
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - premium_transcript
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - filter
+          param:
+            type: string
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - commercial
+          what:
+            type: string
+            enum:
+            - sponsors
+            - recommendations
+            - mention_details
+            - community_review
+            - paid_split
+        required:
+        - kind
+        - what
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - feature
+          feature:
+            type: string
+            enum:
+            - api
+            - export
+        required:
+        - kind
+        - feature
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - rows
+          requested:
+            type:
+            - integer
+            - 'null'
+          remaining:
+            type:
+            - integer
+            - 'null'
+        required:
+        - kind
+        - requested
+        - remaining
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - key
+          scope:
+            type:
+            - string
+            - 'null'
+            enum:
+            - read
+            - monitors:write
+            - trackers:write
+            - recommendations:read
+            - null
+        required:
+        - kind
+        - scope
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - requests
+        required:
+        - kind
+      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
+    MeResponse:
+      type: object
+      properties:
+        user_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the user the API key belongs to.
+        key_id:
+          type:
+          - string
+          - 'null'
+          description: 'Id of the credential making this request: the account key id, or the OAuth token id. Never a secret. Null on a browser session.'
+        key_label:
+          type:
+          - string
+          - 'null'
+          description: The key name set in the dashboard, or the name of the connected OAuth client. Null when none is known.
+        credential_kind:
+          type: string
+          enum:
+          - account_key
+          - oauth
+          - session
+          description: 'How the request authenticated: account_key is an arc_sk_ key, oauth is a token from a connected client, session is a signed-in browser.'
+        email_masked:
+          type:
+          - string
+          - 'null'
+          description: The account email with the local part masked after its first character, e.g. z***@example.com. Null when the account has none.
+        period_resets_at:
+          type:
+          - string
+          - 'null'
+          description: 'ISO 8601 time the monthly row pool resets: 00:00 UTC on the first of next month. Null on the free plan, whose rows are a lifetime pool.'
+        tier:
+          type: string
+          description: Plan tier, e.g. free, pro, pro_plus, ultra, enterprise.
+        scopes:
+          type: array
+          items:
+            type: string
+          description: Scopes granted to this API key, e.g. read, monitors:write, trackers:write, recommendations:read.
+        rate_limit:
+          type: integer
+          description: 'Requests allowed per 60-second window for this key: 600 for enterprise, 240 for other paid tiers, 60 for free, unless a per-key override is set.'
+        recommendations_api_enabled:
+          type: boolean
+          description: True when the plan includes the Recommendations API (commercial intelligence endpoints).
+        usage:
+          type: object
+          properties:
+            rows_used:
+              type: integer
+              description: Premium rows consumed this period.
+            rows_remaining:
+              type: integer
+              description: Premium rows left this period.
+            monthly_rows:
+              type: integer
+              description: Total premium rows included per period.
+            current_spend_cents:
+              type: integer
+              description: On-demand overage spend so far this period, in US cents.
+            credits:
+              type: object
+              properties:
+                available:
+                  type:
+                  - integer
+                  - 'null'
+                  description: 'Credits spendable now: plan, granted, purchased, and on-demand up to its cap. Null when nothing limits it.'
+                plan:
+                  type: object
+                  properties:
+                    credits:
+                      type:
+                      - integer
+                      - 'null'
+                      description: Plan credits this month. Null when the plan has no limit.
+                    used:
+                      type: integer
+                      description: Plan credits spent this month.
+                    resets_at:
+                      type: string
+                      description: YYYY-MM-DD, the first day of next month (UTC), when plan credits reset.
+                  required:
+                  - credits
+                  - used
+                  - resets_at
+                granted:
+                  type: integer
+                  description: Credits left in granted lots that have not expired.
+                purchased:
+                  type: integer
+                  description: Credits left in purchased top-ups.
+                on_demand:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                      description: True when on-demand credits are on.
+                    cap_credits:
+                      type:
+                      - integer
+                      - 'null'
+                      description: The on-demand cap in credits, at $0.002 a credit. Null when uncapped or off.
+                    used:
+                      type: integer
+                      description: On-demand credits spent this month.
+                  required:
+                  - enabled
+                  - cap_credits
+                  - used
+              required:
+              - available
+              - plan
+              - granted
+              - purchased
+              - on_demand
+              description: The month in credits (1 credit is $0.001; a row is 4 credits). Present only when the credits ledger decides access.
+          required:
+          - rows_used
+          - rows_remaining
+          - monthly_rows
+          - current_spend_cents
+        settings:
+          $ref: '#/components/schemas/AccountSettings'
+      required:
+      - user_id
+      - key_id
+      - key_label
+      - credential_kind
+      - email_masked
+      - period_resets_at
+      - tier
+      - scopes
+      - rate_limit
+      - recommendations_api_enabled
+      - usage
+      - settings
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          description: Always "ok" when the API is reachable.
+        version:
+          type: string
+          enum:
+          - v1
+          description: API version.
+        time:
+          type: string
+          description: Current server time (ISO 8601).
+      required:
+      - status
+      - version
+      - time
+    OpenApiDocument:
+      type: object
+      properties:
+        openapi:
+          type: string
+          description: OpenAPI version, 3.1.0.
+        info:
+          type: object
+          properties:
+            title:
+              type: string
+              description: API title.
+            version:
+              type: string
+              description: API version.
+            contact:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Contact name.
+                url:
+                  type: string
+                  description: Contact URL.
+              required:
+              - name
+              - url
+              description: Who publishes the API.
+          required:
+          - title
+          - version
+          - contact
+          description: API metadata.
+        servers:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                description: Base URL.
+            required:
+            - url
+          description: Base URLs the API is served from.
+        paths:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: {}
+          description: 'Every operation, keyed by path then HTTP method. An open map: each value is an OpenAPI path item object.'
+        components:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: {}
+          description: Shared schemas and security schemes, keyed by component kind then name. An open map of OpenAPI component objects.
+      required:
+      - openapi
+      - info
+      - servers
+      - paths
+      - components
+      description: This OpenAPI 3.1 document, the one you are reading.
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - permission_error
+              - quota_exceeded
+              - rate_limit_error
+              - not_found
+              - conflict_error
+              - server_error
+              description: 'The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling.'
+            code:
+              type: string
+              description: 'The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first.'
+            reason:
+              type: string
+              enum:
+              - no_credential
+              - invalid
+              - revoked
+              description: 'Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable.'
+            message:
+              type: string
+              description: One plain line. Names the fix or the unlock.
+            param:
+              type: string
+              description: The query or body parameter the gate refused, when one did.
+            gate:
+              type: string
+              enum:
+              - rows
+              - key
+              - plan
+              - freshness
+              - exposure_law
+              - rate
+              - pagination
+              description: Which boundary refused. Present on every gate error; switch on it without parsing the message.
+            resource:
+              $ref: '#/components/schemas/ErrorResource'
+            unlock:
+              type: object
+              properties:
+                tier:
+                  type: string
+                  description: The plan that lifts the gate.
+                url:
+                  type: string
+                  description: Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim.
+                offer:
+                  type: 'null'
+                  description: Reserved for the agent-discount offer. Always null today.
+                action:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      description: What the call does. send_signup_code sends a verification code to an address for an account key.
+                    method:
+                      type: string
+                      description: HTTP method to use.
+                    url:
+                      type: string
+                      description: Absolute endpoint carrying its ?src= attribution. Call it verbatim.
+                  required:
+                  - kind
+                  - method
+                  - url
+                  description: The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens.
+              required:
+              - tier
+              - url
+              - offer
+              description: How to lift the gate. Present when the gate has an unlock.
+            retry_after_seconds:
+              type: integer
+              description: Present on rate gates. Mirrors the Retry-After header.
+            details:
+              type: object
+              properties:
+                quote:
+                  $ref: '#/components/schemas/RefusedQuote'
+                existing_id:
+                  type: string
+                  description: On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker.
+                limit:
+                  type: integer
+                  description: On tracker_limit, the trackers the plan holds.
+                count:
+                  type: integer
+                  description: On tracker_limit, the trackers the account holds now.
+              description: Machine data the refusal carries for you to act on. Present only on the codes that name a field here.
+            doc_url:
+              type: string
+            request_id:
+              type: string
+          required:
+          - type
+          - code
+          - message
+          - doc_url
+          - request_id
+      required:
+      - error
+      x-arcmira-codes:
+      - code: alert_not_found
+        type: not_found
+        description: A referenced alert row does not exist or belongs to another account.
+      - code: api_not_enabled
+        type: permission_error
+        gate: plan
+        description: The plan does not include API access. unlock.url names the plan that does.
+      - code: appearances_person_only
+        type: invalid_request_error
+        description: Appearance filtering applies to person entities only.
+      - code: channel_not_found
+        type: not_found
+        description: No channel matches the id or slug.
+      - code: email_verification_required
+        type: permission_error
+        description: Verify the account email before adding recipients.
+      - code: entity_not_found
+        type: not_found
+        description: No entity matches the id, slug, or name.
+      - code: feature_not_available
+        type: permission_error
+        gate: plan
+        description: The plan does not include this feature. unlock.url names the plan that does.
+      - code: feedback_not_found
+        type: not_found
+        description: No feedback submission with this id for this account.
+      - code: filter_requires_paid
+        type: permission_error
+        gate: plan
+        description: The parameter in param needs a paid plan; omit it for the free answer.
+      - code: forbidden
+        type: permission_error
+        description: The caller may not perform this operation on this resource.
+      - code: freshness_requires_paid
+        type: permission_error
+        gate: freshness
+        description: The date window is newer than the plan serves; move it before the cutoff or upgrade.
+      - code: id_required
+        type: invalid_request_error
+        description: A filter in param received a name where it takes an id (ent_{n} or UC...). Resolve the name first with GET /v1/entities/resolve and pass best.id or best.youtube_channel_id.
+      - code: idempotency_conflict
+        type: conflict_error
+        description: The Idempotency-Key was sent before with a different request body. Send a new key for a new request.
+      - code: idempotency_result_expired
+        type: conflict_error
+        description: The original one-time signing secret is no longer valid. Use a new request key for a new rotation.
+      - code: insufficient_scope
+        type: permission_error
+        gate: key
+        description: The key lacks the scope this route needs.
+      - code: invalid_api_key
+        type: authentication_error
+        gate: key
+        description: No usable credential. reason says whether none was sent, it is unknown, or it was revoked.
+      - code: invalid_body
+        type: invalid_request_error
+        description: The JSON body failed validation; message names the field.
+      - code: invalid_cursor
+        type: invalid_request_error
+        description: The continuation is invalid, expired, or belongs to another query. Restart without cursor.
+      - code: invalid_email_recipients
+        type: invalid_request_error
+        description: Email recipients failed validation.
+      - code: invalid_feedback_request
+        type: invalid_request_error
+        description: The feedback query or corrections do not fit the feedback type.
+      - code: invalid_idempotency_key
+        type: invalid_request_error
+        description: Idempotency-Key must be 1 to 255 printable ASCII characters (0x21 to 0x7E). param is Idempotency-Key.
+      - code: invalid_query
+        type: invalid_request_error
+        description: A query parameter failed validation; message names it.
+      - code: invalid_slack_integration
+        type: invalid_request_error
+        description: Choose an active Slack integration owned by the account.
+      - code: invalid_video_id
+        type: invalid_request_error
+        description: The video_id path segment is not an 11-character YouTube id.
+      - code: job_requires_account
+        type: authentication_error
+        gate: key
+        description: Transcription jobs belong to an account; sign up for a key.
+      - code: monitor_creation_unavailable
+        type: server_error
+        description: Monitor creation is temporarily unavailable. Retry the same request with the same key.
+      - code: monitor_creation_unconfirmed
+        type: server_error
+        description: Monitor creation could not be confirmed. Retry the same request with the same key.
+      - code: monitor_not_found
+        type: not_found
+        description: No monitor with this id on the account.
+      - code: not_found
+        type: not_found
+        description: No route or resource at this path.
+      - code: owner_only
+        type: permission_error
+        description: Only the team owner may change or test a team monitor's webhook, rotate its secret, or delete it.
+      - code: owner_plan_required
+        type: permission_error
+        description: A team monitor follows the team owner's plan, which does not include this. The owner can upgrade; a member's own plan does not apply.
+      - code: pagination_gated
+        type: permission_error
+        gate: pagination
+        description: Rows past the free window need a paid plan.
+      - code: paid_plan_required
+        type: permission_error
+        description: The operation needs a paid plan. unlock.url names the plan that does.
+      - code: premium_transcript_requested
+        type: permission_error
+        gate: exposure_law
+        description: Premium transcript text needs a plan with Premium transcripts.
+      - code: quota_exceeded
+        type: quota_exceeded
+        gate: rows
+        description: The row pool is spent. unlock.url upgrades or raises the limit.
+      - code: rate_limited
+        type: rate_limit_error
+        gate: rate
+        description: Too many requests in the window. Retry-After carries the wait.
+      - code: recipient_upgrade_required
+        type: permission_error
+        description: The requested email recipient count exceeds the plan allowance.
+      - code: recommendations_not_enabled
+        type: permission_error
+        gate: plan
+        description: Commercial data needs a Pro+ plan.
+      - code: resource_conflict
+        type: conflict_error
+        description: The operation conflicts with existing resource state.
+      - code: scope_too_broad
+        type: invalid_request_error
+        description: The requested exact video scope exceeds the search filename cap; narrow by channel or date.
+      - code: search_unavailable
+        type: server_error
+        description: Transcript search is unavailable (HTTP 503). Retry-After carries the wait.
+      - code: server_error
+        type: server_error
+        description: Unexpected failure. Retry with backoff and quote request_id if it persists.
+      - code: signup_code_invalid
+        type: invalid_request_error
+        description: The signup code is wrong, expired, or spent; message names the attempts left.
+      - code: signup_send_limited
+        type: rate_limit_error
+        description: Verification code sends hit a per-address, per-IP, or per-client cap. Retry-After carries the wait.
+      - code: spend_limit_exceeded
+        type: quota_exceeded
+        description: The purchase would take on-demand spending past the account or seat spend limit this period. Nothing was charged. Raise the limit or wait for the next period, then send a new intent.
+      - code: team_not_found
+        type: not_found
+        description: No team with this id that the caller belongs to.
+      - code: tracker_already_exists
+        type: conflict_error
+        description: The account already tracks this entity. error.details.existing_id identifies the existing tracker.
+      - code: tracker_limit
+        type: permission_error
+        description: The plan's tracker limit is reached. error.details carries limit and count.
+      - code: tracker_not_found
+        type: not_found
+        description: No tracker with this id on the account.
+      - code: transcript_fetching
+        type: server_error
+        description: The caption track is being fetched now (HTTP 503). Retry-After carries the wait; nothing was charged.
+      - code: transcript_requires_account
+        type: authentication_error
+        gate: key
+        description: Full transcripts need an account key; unlock.action sends a signup code.
+      - code: transcript_unavailable
+        type: not_found
+        description: The video has no transcript in the requested lane or language; languages lists what exists.
+      - code: unknown_entity
+        type: invalid_request_error
+        description: An explicit entity_ids value does not resolve to a searchable entity.
+      - code: webhook_not_configured
+        type: conflict_error
+        description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
+    SignupVerifiedResponse:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 'The arc_sk_ account key. Shown once. Send it as Authorization: Bearer.'
+        key_id:
+          type: string
+          description: The key id. Appears on funnel events and in the dashboard; never a secret.
+        header:
+          type: string
+          description: 'The pasteable request header line: Authorization: Bearer arc_sk_...'
+        scopes:
+          type: array
+          items:
+            type: string
+          description: Always ["read"]. Create an Admin key in the dashboard for account write access.
+        tier:
+          type: string
+          description: 'The plan the account is on: free for a new account, its plan when the address already had one.'
+        rows_allotted:
+          type: integer
+          description: 'The pool this key draws on: a free account''s lifetime credits, a paid plan''s monthly rows.'
+        next:
+          type: string
+          description: 'A curl command for the first call: GET /v1/me with the key.'
+        docs_url:
+          type: string
+          description: Sign-up documentation.
+      required:
+      - key
+      - key_id
+      - header
+      - scopes
+      - tier
+      - rows_allotted
+      - next
+      - docs_url
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    TranscriptSettings:
+      type: object
+      properties:
+        quality:
+          type: string
+          enum:
+          - captions
+          - premium
+          description: 'Default transcript quality. Platform default: captions.'
+        language:
+          type: string
+          description: 'Default comma-separated caption language priority list, tried in order. Platform default: en.'
+        timestamps:
+          type: boolean
+          description: 'Default for the timestamps parameter. Platform default: true, which returns lines[].'
+      required:
+      - quality
+      - language
+      - timestamps
+      description: What a transcript request that names no parameter of its own receives.
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
+    AccountSettings:
+      type: object
+      properties:
+        transcripts:
+          $ref: '#/components/schemas/TranscriptSettings'
+      required:
+      - transcripts
+      description: Account defaults every key of this account resolves against. Set them with PATCH /v1/me/settings.
+    SignupSentResponse:
+      type: object
+      properties:
+        next:
+          type: object
+          properties:
+            method:
+              type: string
+              enum:
+              - POST
+              description: Always POST.
+            url:
+              type: string
+              description: 'The verify call, absolute: POST it with { email, code } once the code arrives.'
+          required:
+          - method
+          - url
+          description: The call that completes the signup.
+        expires_in:
+          type: integer
+          description: Seconds the code stays valid, from the moment it was sent.
+      required:
+      - next
+      - expires_in
+  headers:
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: arc_sk_*
+externalDocs:
+  description: Official Arcmira API documentation
+  url: https://arcmira.com/docs

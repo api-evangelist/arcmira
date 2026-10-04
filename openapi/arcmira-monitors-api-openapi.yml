@@ -1,0 +1,1995 @@
+openapi: 3.2.0
+info:
+  title: Arcmira Monitors API
+  description: 'Search YouTube transcripts for timestamped passages. Find mentions of people, organizations, products and topics; research channel sponsors and recommendations; retrieve creator captions or Premium transcripts with speaker identification; and monitor entities for new mentions. Official API guides: https://arcmira.com/docs. Explicit Premium retrieval can purchase within the account plan and budget.'
+  version: 1.0.0
+  contact:
+    name: Arcmira
+    url: https://arcmira.com
+servers:
+- url: https://api.arcmira.com
+tags:
+- name: Monitors
+paths:
+  /v1/monitors:
+    get:
+      tags:
+      - Monitors
+      operationId: list_monitors
+      summary: List monitors
+      description: All monitors for the account with tracker counts, alert counts for the current calendar month, and Slack display metadata. Single page, no pagination.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorListResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      tags:
+      - Monitors
+      operationId: create_monitor
+      summary: Create monitor
+      description: 'Creating with notify_webhook: true and a webhook_url enables HMAC-signed webhook delivery and returns the signing secret (monitor.webhook_secret) in this response. Store it securely. A retry with the original Idempotency-Key recovers the same secret for up to 24 hours while it remains the current secret or the valid previous secret. An expired or displaced secret returns 409 idempotency_result_expired without rotating again. Reads do not expose the secret. All subsequent reads expose only webhook_secret_set and webhook_secret_hint.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+        required: false
+        name: Idempotency-Key
+        in: header
+        example: 8b2f6c3e-4d1a-4e7b-9c05-2f6a1b7d3e90
+        description: 'One key per intent, 1 to 255 printable ASCII characters (0x21 to 0x7E); anything else is 400 invalid_idempotency_key. Keys are scoped to the account, credential and resource family. The same key and normalized method, path and body returns the committed response with Idempotency-Replayed: true. A changed intent within the same family returns 409 idempotency_conflict. Monitor and tracker families have independent namespaces. Secret recovery is limited as described by the operation.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Display name (1-100 characters). Required on create.
+                notify_emails:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  maxItems: 20
+                  description: Desired email recipients. External recipients must confirm before delivery. Free includes one additional recipient per monitor; paid plans allow up to 20 total. Default [].
+                notify_frequency:
+                  type: string
+                  enum:
+                  - realtime
+                  - hourly
+                  - daily
+                  description: 'Delivery cadence. Default realtime. Values: realtime (as analysis completes), hourly (hourly digest), daily (daily digest).'
+                digest_day:
+                  type: string
+                  description: Digest day of week. Default "monday". Consulted only by weekly digests, which are dashboard-configured today; inert for API-set frequencies.
+                digest_time:
+                  type: string
+                  description: Digest send hour as HH:MM (account timezone). Default "09:00". Applies to daily digests.
+                notify_webhook:
+                  type: boolean
+                  description: Enable HMAC-signed webhook delivery (paid plans). When enabled together with webhook_url, the response returns the signing secret (monitor.webhook_secret), recoverable with the original Idempotency-Key during the valid recovery window. PATCHing true also re-enables an auto-disabled webhook and resets its failure counter.
+                webhook_url:
+                  type: string
+                  description: Destination URL for webhook alert deliveries.
+                notify_slack:
+                  type: boolean
+                  description: Enable Slack delivery. Requires a Slack integration connected in the dashboard.
+                slack_integration_id:
+                  type: string
+                  description: Slack integration id from the dashboard OAuth flow.
+                slack_channel_id:
+                  type: string
+                  description: Slack channel id to deliver to.
+                team_id:
+                  type: string
+                  minLength: 1
+                  description: Create the monitor in this team, which the caller must belong to. The team owner pays for it and its plan sets the limits. A member may not set a webhook. Create only.
+              required:
+              - name
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorMutationResponse'
+        '201':
+          description: Monitor created. When this request enabled webhook signing, monitor.webhook_secret is present and recoverable by retrying with the original Idempotency-Key during its recovery window.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorMutationResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict. idempotency_conflict means the Idempotency-Key was finalized with a different request intent.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/monitors/{id}:
+    patch:
+      tags:
+      - Monitors
+      operationId: update_monitor
+      summary: Update monitor
+      description: 'A PATCH that newly enables webhook signing (turns notify_webhook on, or sets a webhook_url where no secret existed before) returns the signing secret (monitor.webhook_secret) in this response. Store it securely. A retry with the original Idempotency-Key recovers the same secret for up to 24 hours while it remains the current secret or the valid previous secret. An expired or displaced secret returns 409 idempotency_result_expired without rotating again. Reads do not expose the secret. Unrelated PATCHes expose only webhook_secret_set and webhook_secret_hint. PATCHing notify_webhook: true also re-enables a webhook that was auto-disabled after repeated failures and resets its failure counter.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: Monitor id.
+        required: true
+        description: Monitor id.
+        name: id
+        in: path
+      - schema:
+          type: string
+        required: false
+        name: Idempotency-Key
+        in: header
+        example: 8b2f6c3e-4d1a-4e7b-9c05-2f6a1b7d3e90
+        description: 'One key per intent, 1 to 255 printable ASCII characters (0x21 to 0x7E); anything else is 400 invalid_idempotency_key. Keys are scoped to the account, credential and resource family. The same key and normalized method, path and body returns the committed response with Idempotency-Replayed: true. A changed intent within the same family returns 409 idempotency_conflict. Monitor and tracker families have independent namespaces. Secret recovery is limited as described by the operation.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Display name (1-100 characters). Required on create.
+                notify_emails:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  maxItems: 20
+                  description: Desired email recipients. External recipients must confirm before delivery. Free includes one additional recipient per monitor; paid plans allow up to 20 total. Default [].
+                notify_frequency:
+                  type: string
+                  enum:
+                  - realtime
+                  - hourly
+                  - daily
+                  description: 'Delivery cadence. Default realtime. Values: realtime (as analysis completes), hourly (hourly digest), daily (daily digest).'
+                digest_day:
+                  type: string
+                  description: Digest day of week. Default "monday". Consulted only by weekly digests, which are dashboard-configured today; inert for API-set frequencies.
+                digest_time:
+                  type: string
+                  description: Digest send hour as HH:MM (account timezone). Default "09:00". Applies to daily digests.
+                notify_webhook:
+                  type: boolean
+                  description: Enable HMAC-signed webhook delivery (paid plans). When enabled together with webhook_url, the response returns the signing secret (monitor.webhook_secret), recoverable with the original Idempotency-Key during the valid recovery window. PATCHing true also re-enables an auto-disabled webhook and resets its failure counter.
+                webhook_url:
+                  type: string
+                  description: Destination URL for webhook alert deliveries.
+                notify_slack:
+                  type: boolean
+                  description: Enable Slack delivery. Requires a Slack integration connected in the dashboard.
+                slack_integration_id:
+                  type: string
+                  description: Slack integration id from the dashboard OAuth flow.
+                slack_channel_id:
+                  type: string
+                  description: Slack channel id to deliver to.
+                paused:
+                  type: boolean
+                  description: Paused monitors accept config changes but do not deliver; alerts that would have fired are not queued.
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorMutationResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict. idempotency_conflict means the Idempotency-Key was finalized with a different request intent.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      tags:
+      - Monitors
+      operationId: delete_monitor
+      summary: Delete monitor
+      description: Deletes the monitor AND every tracker inside it (trackers_deleted reports how many). Cannot be undone. Retrying with the original Idempotency-Key returns the original deleted count without deleting again.
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: Monitor id.
+        required: true
+        description: Monitor id.
+        name: id
+        in: path
+      - schema:
+          type: string
+        required: false
+        name: Idempotency-Key
+        in: header
+        example: 8b2f6c3e-4d1a-4e7b-9c05-2f6a1b7d3e90
+        description: 'One key per intent, 1 to 255 printable ASCII characters (0x21 to 0x7E); anything else is 400 invalid_idempotency_key. Keys are scoped to the account, credential and resource family. The same key and normalized method, path and body returns the committed response with Idempotency-Replayed: true. A changed intent within the same family returns 409 idempotency_conflict. Monitor and tracker families have independent namespaces. Secret recovery is limited as described by the operation.'
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorDeleteResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict. idempotency_conflict means the Idempotency-Key was finalized with a different request intent.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/monitors/{id}/webhook-secret/rotate:
+    post:
+      tags:
+      - Monitors
+      operationId: rotate_monitor_webhook_secret
+      summary: Rotate the monitor webhook signing secret
+      description: 'Generates a new signing secret and returns it in this response. Store it securely. A retry with the original Idempotency-Key recovers the same secret for up to 24 hours while it remains the current secret or the valid previous secret. An expired or displaced secret returns 409 idempotency_result_expired without rotating again. Reads do not expose the secret. Zero-downtime overlap: the previous secret remains valid until previous_secret_expires_at (24 hours); during the window every delivery carries an additional X-Arcmira-Signature-Previous header computed with the old secret over the same {timestamp}.{payload} string, so you can verify with either secret while you roll. After the window the old secret is dropped and the extra header disappears. Rotating again during the window replaces the previous secret and resets the window. Requires a configured webhook (webhook_url set); otherwise 409 with code webhook_not_configured. Auto-disable interplay: rotation resets webhook_failures but never re-enables a webhook that was auto-disabled after repeated failures; to resume delivery, also PATCH the monitor with notify_webhook: true. Requires the monitors:write scope.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: Monitor id.
+        required: true
+        description: Monitor id.
+        name: id
+        in: path
+      - schema:
+          type: string
+        required: false
+        name: Idempotency-Key
+        in: header
+        example: 8b2f6c3e-4d1a-4e7b-9c05-2f6a1b7d3e90
+        description: 'One key per intent, 1 to 255 printable ASCII characters (0x21 to 0x7E); anything else is 400 invalid_idempotency_key. Keys are scoped to the account, credential and resource family. The same key and normalized method, path and body returns the committed response with Idempotency-Replayed: true. A changed intent within the same family returns 409 idempotency_conflict. Monitor and tracker families have independent namespaces. Secret recovery is limited as described by the operation.'
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSecretRotateResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict. idempotency_conflict means the Idempotency-Key was finalized with a different request intent. The route also answers 409 for a duplicate or a failed precondition, named in its description.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/monitors/{id}/trackers:
+    get:
+      tags:
+      - Monitors
+      operationId: list_monitor_trackers
+      summary: List monitor trackers
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: Monitor id.
+        required: true
+        description: Monitor id.
+        name: id
+        in: path
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorTrackersResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      tags:
+      - Monitors
+      operationId: add_monitor_trackers
+      summary: Add trackers to monitor
+      description: 'Attaches EXISTING trackers to the monitor by id ({ tracker_ids: ["trk_..."] }). It does not create trackers: create them first via POST /v1/trackers, then attach. Attached trackers use the monitor''s delivery settings. Supply 1 to 90 IDs. Duplicate IDs count once. Every ID must belong to the account; a missing or foreign ID returns tracker_not_found and none are attached. attached_count reports the unique attached count.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: Monitor id.
+        required: true
+        description: Monitor id.
+        name: id
+        in: path
+      - schema:
+          type: string
+        required: false
+        name: Idempotency-Key
+        in: header
+        example: 8b2f6c3e-4d1a-4e7b-9c05-2f6a1b7d3e90
+        description: 'One key per intent, 1 to 255 printable ASCII characters (0x21 to 0x7E); anything else is 400 invalid_idempotency_key. Keys are scoped to the account, credential and resource family. The same key and normalized method, path and body returns the committed response with Idempotency-Replayed: true. A changed intent within the same family returns 409 idempotency_conflict. Monitor and tracker families have independent namespaces. Secret recovery is limited as described by the operation.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tracker_ids:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  minItems: 1
+                  maxItems: 90
+                  description: Ids of existing trackers ("trk_...") to attach to this monitor. Create trackers first via POST /v1/trackers. At most 90 IDs per request; duplicates count once. All IDs must belong to the account or none are attached.
+              required:
+              - tracker_ids
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorAddTrackersResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict. idempotency_conflict means the Idempotency-Key was finalized with a different request intent.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/monitors/{id}/alerts:
+    get:
+      tags:
+      - Monitors
+      operationId: list_monitor_alerts
+      summary: List recent monitor alerts
+      description: The newest limit alert deliveries for the monitor (default 25, at most 100), as a single page. has_more is true when older alerts exist past limit; this endpoint does not paginate, so next_cursor is always null and a larger limit reads further. entity_id ("ent_{n}") and mention_id ("men_{n}") are the ids GET /v1/entities/{id} and GET /v1/mentions use, and video_id is the YouTube video id that GET /v1/transcripts/{video_id} reads. Dispute a fired alert via POST /v1/feedback with type monitor_alert.
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: Monitor id.
+        required: true
+        description: Monitor id.
+        name: id
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Alerts to return, newest first, 1 to 100. Default 25.
+        required: false
+        description: Alerts to return, newest first, 1 to 100. Default 25.
+        name: limit
+        in: query
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertListResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/monitors/{id}/entities:
+    post:
+      tags:
+      - Monitors
+      operationId: add_monitor_entities
+      summary: Follow entities in a monitor by id or exact name
+      description: 'Follows each entity ({ entity_ids: ["ent_..."] }) and each exact name ({ names: [{ name, type }] }) in the monitor: the monitor account''s existing tracker for the entity or name (compared case-insensitively) is reused, else a tracker is created under the monitor''s account (the team owner on a team monitor) for the canonical entity (a merged id follows its redirect) or the name as given, then the trackers are attached, all in one write. Use names for something not yet indexed; a channel is named by its YouTube channel id, and a channel name answers 400 id_required. Attached trackers use the monitor''s delivery settings. Supply 1 to 90 ids and names together; duplicates count once. Each gets one result, ids first then names, in request order; a names result carries name and type in place of entity_id. An id that cannot be followed comes back with attached: false and a reason (entity_not_found, entity_type_not_trackable, tracker_limit_reached, tracked_in_another_monitor) while the rest still attach; a tracker already in another monitor is left there and named in current_monitor_id. Requires the monitors:write and trackers:write scopes.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: Monitor id.
+        required: true
+        description: Monitor id.
+        name: id
+        in: path
+      - schema:
+          type: string
+        required: false
+        name: Idempotency-Key
+        in: header
+        example: 8b2f6c3e-4d1a-4e7b-9c05-2f6a1b7d3e90
+        description: 'One key per intent, 1 to 255 printable ASCII characters (0x21 to 0x7E); anything else is 400 invalid_idempotency_key. Keys are scoped to the account, credential and resource family. The same key and normalized method, path and body returns the committed response with Idempotency-Replayed: true. A changed intent within the same family returns 409 idempotency_conflict. Monitor and tracker families have independent namespaces. Secret recovery is limited as described by the operation.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                entity_ids:
+                  type: array
+                  items:
+                    type: string
+                    pattern: ^ent_[1-9][0-9]*$
+                  description: Entity ids ("ent_...") to follow in this monitor, from GET /v1/entities/resolve or search. Duplicates count once. A merged id follows its redirect to the canonical entity.
+                names:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        minLength: 1
+                        description: The exact name to watch, matched case-insensitively against analyzed media, so it can be followed before the entity is indexed. For a channel, the YouTube channel id (UC plus 22 characters); a channel name answers 400 id_required naming GET /v1/entities/resolve?q=...&type=channel.
+                      type:
+                        type: string
+                        enum:
+                        - person
+                        - organization
+                        - org
+                        - product
+                        - topic
+                        - channel
+                        description: person, organization (org is accepted), product, topic or channel.
+                      person_match_mode:
+                        type: string
+                        enum:
+                        - mentions
+                        - appearances
+                        - both
+                        description: For a person tracker this request creates; defaults to the top-level person_match_mode. Other types ignore it.
+                    required:
+                    - name
+                    - type
+                    additionalProperties: false
+                  description: Exact names to follow in this monitor, for a name not yet indexed or one you have no id for. The tracker is created under the monitor's account (the team owner on a team monitor) and attached in the same call; the account's tracker for the same name (compared case-insensitively) and type is reused. Duplicates count once.
+                person_match_mode:
+                  type: string
+                  enum:
+                  - mentions
+                  - appearances
+                  - both
+                  description: 'For person trackers this request creates: mentions (default) matches others talking about the person; appearances matches the person present as a speaker, host or guest; both accepts either. Other types ignore it, and a tracker that already exists keeps its own setting (change it with PATCH /v1/trackers/{id}).'
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/Idempotency-Replayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorAddEntitiesResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict. idempotency_conflict means the Idempotency-Key was finalized with a different request intent.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/integrations/slack:
+    get:
+      tags:
+      - Monitors
+      operationId: list_slack_integrations
+      summary: List connected Slack workspaces
+      description: 'The account''s active Slack workspaces with the ids a monitor needs for Slack delivery: create or PATCH a monitor with notify_slack: true, slack_integration_id set to an id here, and optionally slack_channel_id (default_channel_id when omitted). Slack is connected in the dashboard, never through the API; an empty list means the user must connect it there first. Reads stored data only. Single page, no pagination.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackIntegrationListResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  responses:
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    ErrorResource:
+      oneOf:
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - media_rows
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - fresh_media
+          window_days:
+            type: integer
+          cutoff:
+            type:
+            - string
+            - 'null'
+        required:
+        - kind
+        - window_days
+        - cutoff
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - sidebar_rows
+          section:
+            type: string
+            enum:
+            - topics
+            - entities
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - section
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - counts
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - chart
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - pagination
+          param:
+            type:
+            - string
+            - 'null'
+            enum:
+            - offset
+            - cursor
+            - null
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - premium_transcript
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - filter
+          param:
+            type: string
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - commercial
+          what:
+            type: string
+            enum:
+            - sponsors
+            - recommendations
+            - mention_details
+            - community_review
+            - paid_split
+        required:
+        - kind
+        - what
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - feature
+          feature:
+            type: string
+            enum:
+            - api
+            - export
+        required:
+        - kind
+        - feature
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - rows
+          requested:
+            type:
+            - integer
+            - 'null'
+          remaining:
+            type:
+            - integer
+            - 'null'
+        required:
+        - kind
+        - requested
+        - remaining
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - key
+          scope:
+            type:
+            - string
+            - 'null'
+            enum:
+            - read
+            - monitors:write
+            - trackers:write
+            - recommendations:read
+            - null
+        required:
+        - kind
+        - scope
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - requests
+        required:
+        - kind
+      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
+    AlertListResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+          description: Newest alerts first.
+        has_more:
+          type: boolean
+          description: 'True when older alerts exist past limit. The endpoint does not paginate: raise limit, up to 100, to read them.'
+        next_cursor:
+          type: 'null'
+          description: 'Always null: this endpoint does not paginate.'
+      required:
+      - alerts
+      - has_more
+      - next_cursor
+    MonitorMutationResponse:
+      type: object
+      properties:
+        monitor:
+          allOf:
+          - $ref: '#/components/schemas/Monitor'
+          - type: object
+            properties:
+              tracker_count:
+                type: integer
+                description: Number of trackers in the monitor. Always 0 in the create response.
+              webhook_secret:
+                type: string
+                description: 'The webhook signing secret ("whsec_..."). Only present when this request NEWLY enabled webhook signing: a create with notify_webhook: true and a webhook_url, or a PATCH that turns the webhook on (or sets a URL) where no secret existed before. Store it securely. The same Idempotency-Key can recover it for up to 24 hours while it remains the current or valid previous secret. A displaced or expired secret returns idempotency_result_expired without rotating again.'
+            required:
+            - tracker_count
+        message:
+          type: string
+          description: Human-readable confirmation.
+      required:
+      - monitor
+      - message
+    MonitorAddEntitiesResponse:
+      type: object
+      properties:
+        monitor_id:
+          type: string
+          description: The monitor the entities were added to.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitorEntityResult'
+          description: One result per distinct requested entity id, then one per distinct requested name, each in request order.
+      required:
+      - monitor_id
+      - results
+    Monitor:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Monitor id.
+        name:
+          type: string
+          description: Monitor name.
+        paused:
+          type: boolean
+          description: 'True when delivery is paused for all trackers in this monitor. New alerts are not queued, and queued email delivery checks the pause state again before sending. Use PATCH /v1/trackers/{id} with paused: true to pause one tracker.'
+        notify_emails:
+          type: array
+          items:
+            type: string
+          description: Configured email recipients. External recipients must confirm before delivery. Free includes one additional recipient per monitor.
+        email_recipients:
+          type: array
+          items:
+            type: object
+            properties:
+              email:
+                type: string
+              role:
+                type: string
+                enum:
+                - owner
+                - member
+                - external
+                description: 'owner: the paying account. member: a member of the monitor''s team, who receives its alerts without an invitation and does not count toward the recipient limits. external: anyone else, who must confirm first.'
+              user_id:
+                type:
+                - string
+                - 'null'
+                description: The Arcmira user behind an owner or member address. Null for external recipients.
+              status:
+                type: string
+                enum:
+                - active
+                - pending
+                - unsubscribed
+                - suppressed
+                - removed
+                - owner_unverified
+                - plan_limited
+                - muted
+                description: 'muted: a team member muted this monitor for themselves.'
+              invitation_status:
+                type: string
+                enum:
+                - sent
+                - failed
+                - limited
+                - pending
+            required:
+            - email
+            - role
+            - user_id
+            - status
+          description: Every address the monitor reaches, with consent and invitation state. An account is not required to accept.
+        notify_frequency:
+          type: string
+          default: realtime
+          description: 'Delivery cadence. Values: realtime (deliver immediately), hourly (hourly digest), daily (daily digest).'
+        digest_day:
+          type: string
+          default: monday
+          description: Day of week for digest delivery.
+        digest_time:
+          type: string
+          default: 09:00
+          description: Time of day (HH:MM) for digest delivery.
+        notify_webhook:
+          type: boolean
+          description: True when webhook delivery is enabled.
+        webhook_url:
+          type:
+          - string
+          - 'null'
+          description: 'Webhook destination URL. Null when no webhook is configured. Absent when access is member: only the team owner sees the webhook.'
+        webhook_secret_set:
+          type: boolean
+          description: True when a webhook signing secret exists for this monitor. The secret itself is never returned on reads; enablement and rotation responses support recovery with the original Idempotency-Key during the valid recovery window. Absent when access is member.
+        webhook_secret_hint:
+          type:
+          - string
+          - 'null'
+          description: Last 4 characters of the current signing secret, for identifying which secret you hold. Null until a secret exists. Absent when access is member.
+        webhook_failures:
+          type: integer
+          default: 0
+          description: 'Consecutive webhook delivery failures recorded for this monitor. Reset by a secret rotation or PATCHing notify_webhook: true; 10 consecutive failures auto-disable a webhook. Note: the delivery pipeline currently accrues failures on the tracker that fired, so this monitor-level counter can lag.'
+        webhook_disabled_at:
+          type:
+          - string
+          - 'null'
+          description: 'When the webhook was auto-disabled after repeated failures. Null while delivery is enabled. Re-enable by PATCHing notify_webhook: true; rotation alone never re-enables.'
+        webhook_disabled_reason:
+          type:
+          - string
+          - 'null'
+          description: Why the webhook was auto-disabled. Null while delivery is enabled.
+        notify_slack:
+          type: boolean
+          description: True when Slack delivery is enabled.
+        slack_integration_id:
+          type:
+          - string
+          - 'null'
+          description: Slack integration used for delivery. Null when Slack is not configured.
+        slack_channel_id:
+          type:
+          - string
+          - 'null'
+          description: Slack channel to deliver to. Null when Slack is not configured.
+        created_at:
+          type: string
+          description: When the monitor was created.
+        updated_at:
+          type: string
+          description: When the monitor was last updated.
+        team:
+          type:
+          - object
+          - 'null'
+          properties:
+            id:
+              type: string
+              description: Team id.
+            name:
+              type: string
+              description: Team name.
+          required:
+          - id
+          - name
+          description: The team the monitor is shared with. Null for a personal monitor.
+        access:
+          type: string
+          enum:
+          - account
+          - member
+          description: 'account: the caller pays for the monitor, as its personal owner or the team owner. member: the caller is another member of its team, who may edit it but not its webhook, and may not delete it.'
+        muted:
+          type: boolean
+          description: True when the caller muted this team monitor for themselves. Always false on a personal monitor.
+      required:
+      - id
+      - name
+      - paused
+      - notify_emails
+      - notify_webhook
+      - webhook_disabled_at
+      - webhook_disabled_reason
+      - notify_slack
+      - slack_integration_id
+      - slack_channel_id
+      - created_at
+      - updated_at
+      - team
+      - access
+      - muted
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - permission_error
+              - quota_exceeded
+              - rate_limit_error
+              - not_found
+              - conflict_error
+              - server_error
+              description: 'The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling.'
+            code:
+              type: string
+              description: 'The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first.'
+            reason:
+              type: string
+              enum:
+              - no_credential
+              - invalid
+              - revoked
+              description: 'Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable.'
+            message:
+              type: string
+              description: One plain line. Names the fix or the unlock.
+            param:
+              type: string
+              description: The query or body parameter the gate refused, when one did.
+            gate:
+              type: string
+              enum:
+              - rows
+              - key
+              - plan
+              - freshness
+              - exposure_law
+              - rate
+              - pagination
+              description: Which boundary refused. Present on every gate error; switch on it without parsing the message.
+            resource:
+              $ref: '#/components/schemas/ErrorResource'
+            unlock:
+              type: object
+              properties:
+                tier:
+                  type: string
+                  description: The plan that lifts the gate.
+                url:
+                  type: string
+                  description: Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim.
+                offer:
+                  type: 'null'
+                  description: Reserved for the agent-discount offer. Always null today.
+                action:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      description: What the call does. send_signup_code sends a verification code to an address for an account key.
+                    method:
+                      type: string
+                      description: HTTP method to use.
+                    url:
+                      type: string
+                      description: Absolute endpoint carrying its ?src= attribution. Call it verbatim.
+                  required:
+                  - kind
+                  - method
+                  - url
+                  description: The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens.
+              required:
+              - tier
+              - url
+              - offer
+              description: How to lift the gate. Present when the gate has an unlock.
+            retry_after_seconds:
+              type: integer
+              description: Present on rate gates. Mirrors the Retry-After header.
+            details:
+              type: object
+              properties:
+                quote:
+                  $ref: '#/components/schemas/RefusedQuote'
+                existing_id:
+                  type: string
+                  description: On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker.
+                limit:
+                  type: integer
+                  description: On tracker_limit, the trackers the plan holds.
+                count:
+                  type: integer
+                  description: On tracker_limit, the trackers the account holds now.
+              description: Machine data the refusal carries for you to act on. Present only on the codes that name a field here.
+            doc_url:
+              type: string
+            request_id:
+              type: string
+          required:
+          - type
+          - code
+          - message
+          - doc_url
+          - request_id
+      required:
+      - error
+      x-arcmira-codes:
+      - code: alert_not_found
+        type: not_found
+        description: A referenced alert row does not exist or belongs to another account.
+      - code: api_not_enabled
+        type: permission_error
+        gate: plan
+        description: The plan does not include API access. unlock.url names the plan that does.
+      - code: appearances_person_only
+        type: invalid_request_error
+        description: Appearance filtering applies to person entities only.
+      - code: channel_not_found
+        type: not_found
+        description: No channel matches the id or slug.
+      - code: email_verification_required
+        type: permission_error
+        description: Verify the account email before adding recipients.
+      - code: entity_not_found
+        type: not_found
+        description: No entity matches the id, slug, or name.
+      - code: feature_not_available
+        type: permission_error
+        gate: plan
+        description: The plan does not include this feature. unlock.url names the plan that does.
+      - code: feedback_not_found
+        type: not_found
+        description: No feedback submission with this id for this account.
+      - code: filter_requires_paid
+        type: permission_error
+        gate: plan
+        description: The parameter in param needs a paid plan; omit it for the free answer.
+      - code: forbidden
+        type: permission_error
+        description: The caller may not perform this operation on this resource.
+      - code: freshness_requires_paid
+        type: permission_error
+        gate: freshness
+        description: The date window is newer than the plan serves; move it before the cutoff or upgrade.
+      - code: id_required
+        type: invalid_request_error
+        description: A filter in param received a name where it takes an id (ent_{n} or UC...). Resolve the name first with GET /v1/entities/resolve and pass best.id or best.youtube_channel_id.
+      - code: idempotency_conflict
+        type: conflict_error
+        description: The Idempotency-Key was sent before with a different request body. Send a new key for a new request.
+      - code: idempotency_result_expired
+        type: conflict_error
+        description: The original one-time signing secret is no longer valid. Use a new request key for a new rotation.
+      - code: insufficient_scope
+        type: permission_error
+        gate: key
+        description: The key lacks the scope this route needs.
+      - code: invalid_api_key
+        type: authentication_error
+        gate: key
+        description: No usable credential. reason says whether none was sent, it is unknown, or it was revoked.
+      - code: invalid_body
+        type: invalid_request_error
+        description: The JSON body failed validation; message names the field.
+      - code: invalid_cursor
+        type: invalid_request_error
+        description: The continuation is invalid, expired, or belongs to another query. Restart without cursor.
+      - code: invalid_email_recipients
+        type: invalid_request_error
+        description: Email recipients failed validation.
+      - code: invalid_feedback_request
+        type: invalid_request_error
+        description: The feedback query or corrections do not fit the feedback type.
+      - code: invalid_idempotency_key
+        type: invalid_request_error
+        description: Idempotency-Key must be 1 to 255 printable ASCII characters (0x21 to 0x7E). param is Idempotency-Key.
+      - code: invalid_query
+        type: invalid_request_error
+        description: A query parameter failed validation; message names it.
+      - code: invalid_slack_integration
+        type: invalid_request_error
+        description: Choose an active Slack integration owned by the account.
+      - code: invalid_video_id
+        type: invalid_request_error
+        description: The video_id path segment is not an 11-character YouTube id.
+      - code: job_requires_account
+        type: authentication_error
+        gate: key
+        description: Transcription jobs belong to an account; sign up for a key.
+      - code: monitor_creation_unavailable
+        type: server_error
+        description: Monitor creation is temporarily unavailable. Retry the same request with the same key.
+      - code: monitor_creation_unconfirmed
+        type: server_error
+        description: Monitor creation could not be confirmed. Retry the same request with the same key.
+      - code: monitor_not_found
+        type: not_found
+        description: No monitor with this id on the account.
+      - code: not_found
+        type: not_found
+        description: No route or resource at this path.
+      - code: owner_only
+        type: permission_error
+        description: Only the team owner may change or test a team monitor's webhook, rotate its secret, or delete it.
+      - code: owner_plan_required
+        type: permission_error
+        description: A team monitor follows the team owner's plan, which does not include this. The owner can upgrade; a member's own plan does not apply.
+      - code: pagination_gated
+        type: permission_error
+        gate: pagination
+        description: Rows past the free window need a paid plan.
+      - code: paid_plan_required
+        type: permission_error
+        description: The operation needs a paid plan. unlock.url names the plan that does.
+      - code: premium_transcript_requested
+        type: permission_error
+        gate: exposure_law
+        description: Premium transcript text needs a plan with Premium transcripts.
+      - code: quota_exceeded
+        type: quota_exceeded
+        gate: rows
+        description: The row pool is spent. unlock.url upgrades or raises the limit.
+      - code: rate_limited
+        type: rate_limit_error
+        gate: rate
+        description: Too many requests in the window. Retry-After carries the wait.
+      - code: recipient_upgrade_required
+        type: permission_error
+        description: The requested email recipient count exceeds the plan allowance.
+      - code: recommendations_not_enabled
+        type: permission_error
+        gate: plan
+        description: Commercial data needs a Pro+ plan.
+      - code: resource_conflict
+        type: conflict_error
+        description: The operation conflicts with existing resource state.
+      - code: scope_too_broad
+        type: invalid_request_error
+        description: The requested exact video scope exceeds the search filename cap; narrow by channel or date.
+      - code: search_unavailable
+        type: server_error
+        description: Transcript search is unavailable (HTTP 503). Retry-After carries the wait.
+      - code: server_error
+        type: server_error
+        description: Unexpected failure. Retry with backoff and quote request_id if it persists.
+      - code: signup_code_invalid
+        type: invalid_request_error
+        description: The signup code is wrong, expired, or spent; message names the attempts left.
+      - code: signup_send_limited
+        type: rate_limit_error
+        description: Verification code sends hit a per-address, per-IP, or per-client cap. Retry-After carries the wait.
+      - code: spend_limit_exceeded
+        type: quota_exceeded
+        description: The purchase would take on-demand spending past the account or seat spend limit this period. Nothing was charged. Raise the limit or wait for the next period, then send a new intent.
+      - code: team_not_found
+        type: not_found
+        description: No team with this id that the caller belongs to.
+      - code: tracker_already_exists
+        type: conflict_error
+        description: The account already tracks this entity. error.details.existing_id identifies the existing tracker.
+      - code: tracker_limit
+        type: permission_error
+        description: The plan's tracker limit is reached. error.details carries limit and count.
+      - code: tracker_not_found
+        type: not_found
+        description: No tracker with this id on the account.
+      - code: transcript_fetching
+        type: server_error
+        description: The caption track is being fetched now (HTTP 503). Retry-After carries the wait; nothing was charged.
+      - code: transcript_requires_account
+        type: authentication_error
+        gate: key
+        description: Full transcripts need an account key; unlock.action sends a signup code.
+      - code: transcript_unavailable
+        type: not_found
+        description: The video has no transcript in the requested lane or language; languages lists what exists.
+      - code: unknown_entity
+        type: invalid_request_error
+        description: An explicit entity_ids value does not resolve to a searchable entity.
+      - code: webhook_not_configured
+        type: conflict_error
+        description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
+    SlackIntegrationListResponse:
+      type: object
+      properties:
+        integrations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: 'Slack integration id. Pass it as slack_integration_id when creating or updating a monitor with notify_slack: true.'
+              team_name:
+                type: string
+                description: The Slack workspace name.
+              default_channel_id:
+                type:
+                - string
+                - 'null'
+                description: The channel the workspace install chose. A monitor with notify_slack and no slack_channel_id delivers here. Null when the install chose none; then pass slack_channel_id.
+              channels:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Slack channel id.
+                    name:
+                      type:
+                      - string
+                      - 'null'
+                      description: 'Channel name as stored at install time, without the #. Null when not stored.'
+                  required:
+                  - id
+                  - name
+                description: 'The channels Arcmira has stored for this workspace: today the install channel only. Arcmira does not list the workspace live.'
+            required:
+            - id
+            - team_name
+            - default_channel_id
+            - channels
+          description: 'Active Slack workspaces connected to the account, ordered by workspace name. Empty when none is connected: connect one in the dashboard first.'
+      required:
+      - integrations
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    MonitorListResponse:
+      type: object
+      properties:
+        monitors:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/Monitor'
+            - type: object
+              properties:
+                tracker_count:
+                  type: integer
+                  description: Number of trackers in the monitor.
+                alerts_this_month:
+                  type: integer
+                  description: Alert deliveries written for this monitor since the start of the calendar month.
+                slack_integration:
+                  type:
+                  - object
+                  - 'null'
+                  properties:
+                    id:
+                      type: string
+                      description: Slack integration id.
+                    team_name:
+                      type:
+                      - string
+                      - 'null'
+                      description: Slack workspace name.
+                    channel_name:
+                      type:
+                      - string
+                      - 'null'
+                      description: Slack channel the integration posts to.
+                  required:
+                  - id
+                  - team_name
+                  - channel_name
+                  description: Display metadata for the connected Slack integration. Null/absent when Slack is not configured.
+              required:
+              - tracker_count
+              - alerts_this_month
+          description: The account's personal monitors and the monitors of every team it belongs to, ordered by dashboard sort position, then name.
+      required:
+      - monitors
+    MonitorTrackersResponse:
+      type: object
+      properties:
+        trackers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Tracker id.
+              entity_name:
+                type: string
+                description: Tracked entity name.
+              entity_type:
+                type: string
+                description: Tracked entity type.
+              display_name:
+                type: string
+                description: User-facing display name. Falls back to entity_name when not customized.
+              paused:
+                type: boolean
+                description: True when the tracker is paused.
+              paused_at:
+                type:
+                - string
+                - 'null'
+                description: When the tracker was paused. Null unless paused.
+              last_notified_at:
+                type:
+                - string
+                - 'null'
+                description: When the tracker last produced an alert. Null until the first alert.
+              created_at:
+                type: string
+                description: When the tracker was created.
+              updated_at:
+                type:
+                - string
+                - 'null'
+                description: When the tracker was last updated.
+              monitor_id:
+                type: string
+                description: The monitor id from the request path.
+            required:
+            - id
+            - entity_name
+            - entity_type
+            - display_name
+            - paused
+            - paused_at
+            - last_notified_at
+            - created_at
+            - updated_at
+            - monitor_id
+          description: Trackers in the monitor, newest first.
+        count:
+          type: integer
+          description: Number of trackers returned.
+      required:
+      - trackers
+      - count
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
+    MonitorEntityResult:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          description: The entity id as requested. Present on an entity_ids result.
+        name:
+          type: string
+          description: The name as requested. Present on a names result.
+        type:
+          type: string
+          enum:
+          - person
+          - organization
+          - product
+          - topic
+          - channel
+          description: The type as requested, org read as organization. Present on a names result.
+        canonical_entity_id:
+          type: string
+          description: 'Present when entity_id was merged: the canonical entity the tracker follows.'
+        tracker_id:
+          type:
+          - string
+          - 'null'
+          description: 'The tracker that follows the entity: an existing one when the account already tracked it, else the one this request created. Null when no tracker could be used (see reason).'
+        created:
+          type: boolean
+          description: true when this request created the tracker.
+        attached:
+          type: boolean
+          description: true when the tracker is in this monitor after the request, including when it already was.
+        reason:
+          type: string
+          enum:
+          - entity_not_found
+          - entity_type_not_trackable
+          - tracker_limit_reached
+          - tracked_in_another_monitor
+          description: 'Why attached is false. Values: entity_not_found (no entity has this id), entity_type_not_trackable (only person, organization, product, topic and channel entities can be tracked), tracker_limit_reached (the plan allows no more trackers; upgrade the plan for more), tracked_in_another_monitor (the account already follows this entity in current_monitor_id; it was left there, so move it with POST /v1/monitors/{id}/trackers if the user wants). A names result can only carry tracker_limit_reached or tracked_in_another_monitor.'
+        current_monitor_id:
+          type: string
+          description: 'With reason tracked_in_another_monitor: the monitor the tracker is in.'
+      required:
+      - tracker_id
+      - created
+      - attached
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Alert delivery id.
+        tracker_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the tracker (tracked entity) that produced the alert.
+        monitor_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the monitor the tracker belongs to. Null for trackers outside a monitor.
+        entity_id:
+          type:
+          - string
+          - 'null'
+          description: Public id ("ent_{n}") of the entity that triggered the alert, when recorded. Null on older rows that were written before entity_id was stored on alert_delivery. Resolve the entity through mention_id or the embedded tracker when this is null.
+        mention_id:
+          type:
+          - string
+          - 'null'
+          description: Public id ("men_{n}") of the mention/appearance row that triggered the alert. Joins directly against mention rows (e.g. /v1/mentions). Null when not appearance-scoped.
+        video_id:
+          type:
+          - string
+          - 'null'
+          description: YouTube video id (11 characters) of the video that triggered the alert. Null when not media-scoped.
+        excerpt_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the active mention excerpt used as mention evidence. Null when the alert was sent before evidence was recorded.
+        evidence_kind:
+          type:
+          - string
+          - 'null'
+          enum:
+          - excerpt
+          - null
+          description: Which evidence layer was sent. Null on older rows.
+        channel:
+          type: string
+          description: 'Delivery channel. Values: email (sent by email), webhook (POSTed to the configured webhook URL), slack (sent to Slack).'
+        status:
+          type: string
+          description: 'Delivery status. Values: pending (queued for delivery), sent (delivered), failed (delivery failed; see error_message), skipped (delivery intentionally skipped).'
+        final_status:
+          type:
+          - string
+          - 'null'
+          description: Terminal status after retries. Null while delivery is still in progress.
+        error_message:
+          type:
+          - string
+          - 'null'
+          description: Error details for failed deliveries. Null unless delivery failed.
+        scheduled_at:
+          type:
+          - string
+          - 'null'
+          description: When delivery was scheduled. Null when delivered immediately.
+        sent_at:
+          type:
+          - string
+          - 'null'
+          description: When the alert was actually sent. Null until delivery succeeds.
+        created_at:
+          type: string
+          description: When the alert row was created.
+        tracker:
+          type: object
+          properties:
+            id:
+              type:
+              - string
+              - 'null'
+              description: Tracker id.
+            entity_name:
+              type:
+              - string
+              - 'null'
+              description: Tracked entity name.
+            entity_type:
+              type:
+              - string
+              - 'null'
+              description: Tracked entity type.
+            display_name:
+              type:
+              - string
+              - 'null'
+              description: User-facing display name for the tracker. Null when not customized.
+          required:
+          - id
+          - entity_name
+          - entity_type
+          - display_name
+          description: The tracker the alert belongs to. Fields are null when the tracker row was deleted.
+        monitor:
+          type:
+          - object
+          - 'null'
+          properties:
+            id:
+              type: string
+              description: Monitor id.
+            name:
+              type:
+              - string
+              - 'null'
+              description: Monitor name.
+          required:
+          - id
+          - name
+          description: The monitor the tracker belongs to. Null for trackers outside a monitor.
+      required:
+      - id
+      - tracker_id
+      - monitor_id
+      - entity_id
+      - mention_id
+      - video_id
+      - excerpt_id
+      - evidence_kind
+      - channel
+      - status
+      - final_status
+      - error_message
+      - scheduled_at
+      - sent_at
+      - created_at
+      - tracker
+      - monitor
+    WebhookSecretRotateResponse:
+      type: object
+      properties:
+        webhook_secret:
+          type: string
+          description: The NEW webhook signing secret ("whsec_..."). Store it securely. The same Idempotency-Key can recover it for up to 24 hours while it remains the current or valid previous secret. A displaced or expired secret returns idempotency_result_expired without rotating again.
+        webhook_secret_hint:
+          type: string
+          description: Last 4 characters of the new secret, for identifying which secret you hold.
+        previous_secret_expires_at:
+          type:
+          - string
+          - 'null'
+          description: End of the 24-hour overlap window. Until then, deliveries carry an additional X-Arcmira-Signature-Previous header computed with the previous secret over the same {timestamp}.{payload} string, so you can verify with either secret while you roll. Null when the monitor had no previous secret (nothing to overlap).
+      required:
+      - webhook_secret
+      - webhook_secret_hint
+      - previous_secret_expires_at
+    MonitorAddTrackersResponse:
+      type: object
+      properties:
+        attached_count:
+          type: integer
+          description: Number of unique requested trackers attached.
+        message:
+          type: string
+          description: Human-readable confirmation, e.g. "Added 3 tracker(s) to monitor".
+        monitor_id:
+          type: string
+          description: The monitor id from the request path.
+      required:
+      - attached_count
+      - message
+      - monitor_id
+    MonitorDeleteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Human-readable confirmation.
+        trackers_deleted:
+          type: integer
+          description: Number of trackers that were deleted along with the monitor.
+      required:
+      - message
+      - trackers_deleted
+  headers:
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+    Idempotency-Replayed:
+      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
+      schema:
+        type: string
+        enum:
+        - 'true'
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: arc_sk_*
+externalDocs:
+  description: Official Arcmira API documentation
+  url: https://arcmira.com/docs

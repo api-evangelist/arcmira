@@ -1,0 +1,1437 @@
+openapi: 3.2.0
+info:
+  title: Arcmira Transcripts API
+  description: 'Search YouTube transcripts for timestamped passages. Find mentions of people, organizations, products and topics; research channel sponsors and recommendations; retrieve creator captions or Premium transcripts with speaker identification; and monitor entities for new mentions. Official API guides: https://arcmira.com/docs. Explicit Premium retrieval can purchase within the account plan and budget.'
+  version: 1.0.0
+  contact:
+    name: Arcmira
+    url: https://arcmira.com
+servers:
+- url: https://api.arcmira.com
+tags:
+- name: Transcripts
+paths:
+  /v1/transcripts/{video_id}:
+    get:
+      tags:
+      - Transcripts
+      operationId: get_transcript
+      summary: Get a video transcript
+      description: 'Caption retrieval costs one row per started 15 minutes. quality=premium is one read: an owned transcript answers 200 ready at zero rows; otherwise this call buys the whole video within the account''s plan and on-demand budget, included credits first and then on-demand money up to the account limit, and answers 202 pending with the job and Retry-After until the transcript is ready. Read again after Retry-After; repeated reads join the same purchase and never buy twice. When the last purchase for the video failed, the read answers 200 state failed with the job and last_attempt and buys nothing; retry=true buys it again. When the plan or the budget blocks, 403 paid_plan_required (with unlock) or 402 quota_exceeded or spend_limit_exceeded carries the price in quote and nothing is charged. A default-premium account with nothing owned reads captions with a note. start/end only trim the returned content; language selects caption tracks, timestamps=false returns paragraphs. Premium lines carry speaker and index, and the body carries speakers and revision.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: YouTube video id, 11 characters.
+        required: true
+        description: YouTube video id, 11 characters.
+        name: video_id
+        in: path
+      - schema:
+          type: string
+          enum:
+          - captions
+          - premium
+          description: 'captions reads creator or automatic captions at 1 row per started 15 minutes. premium is one read: an owned transcript returns 200 state ready at zero rows; otherwise the read buys the whole video within the account''s plan and on-demand budget (included credits first, then on-demand money up to the account limit) and returns 202 state pending with the job until it is ready. When the last purchase for the video failed it answers 200 state failed and buys again only with retry=true. 402 quota_exceeded or spend_limit_exceeded and 403 paid_plan_required carry the price in quote. It never substitutes captions. Default captions unless changed in account settings.'
+        required: false
+        description: 'captions reads creator or automatic captions at 1 row per started 15 minutes. premium is one read: an owned transcript returns 200 state ready at zero rows; otherwise the read buys the whole video within the account''s plan and on-demand budget (included credits first, then on-demand money up to the account limit) and returns 202 state pending with the job until it is ready. When the last purchase for the video failed it answers 200 state failed and buys again only with retry=true. 402 quota_exceeded or spend_limit_exceeded and 403 paid_plan_required carry the price in quote. It never substitutes captions. Default captions unless changed in account settings.'
+        name: quality
+        in: query
+      - schema:
+          type: string
+          description: Comma-separated caption language priority list, at most 5, tried in order (e.g. "de,en"). Use asr for the first automatic track and asr-<code> for a specific one. Default en. languages[] in the response lists every track the video offers.
+        required: false
+        description: Comma-separated caption language priority list, at most 5, tried in order (e.g. "de,en"). Use asr for the first automatic track and asr-<code> for a specific one. Default en. languages[] in the response lists every track the video offers.
+        name: language
+        in: query
+      - schema:
+          type: boolean
+          description: false returns paragraphs[] of { start, text, speaker? } instead of lines[], for reading rather than citing. Default true.
+        required: false
+        description: false returns paragraphs[] of { start, text, speaker? } instead of lines[], for reading rather than citing. Default true.
+        name: timestamps
+        in: query
+      - schema:
+          type:
+          - number
+          - 'null'
+          minimum: 0
+          description: Window start in seconds from the beginning of the video. Send start and end together. On captions the window bills only its own started 15-minute blocks; on Premium it trims the returned content. An explicit Premium read can purchase the whole video within the account plan and budget; a window does not reduce that purchase price.
+        required: false
+        description: Window start in seconds from the beginning of the video. Send start and end together. On captions the window bills only its own started 15-minute blocks; on Premium it trims the returned content. An explicit Premium read can purchase the whole video within the account plan and budget; a window does not reduce that purchase price.
+        name: start
+        in: query
+      - schema:
+          type:
+          - number
+          - 'null'
+          minimum: 0
+          description: Window end in seconds, greater than start and no greater than the video duration. Send start and end together.
+        required: false
+        description: Window end in seconds, greater than start and no greater than the video duration. Send start and end together.
+        name: end
+        in: query
+      - schema:
+          type: boolean
+          description: Premium only; captions with retry=true returns invalid_query. When the last Premium purchase for this video failed, a read answers 200 state failed with the job and last_attempt and buys nothing; retry=true buys it again under the same quote, budget and one-purchase rules as the first read. While that refund is still settling (job.status refund_pending) even retry=true answers state failed. Without a failed purchase it changes nothing.
+        required: false
+        description: Premium only; captions with retry=true returns invalid_query. When the last Premium purchase for this video failed, a read answers 200 state failed with the job and last_attempt and buys nothing; retry=true buys it again under the same quote, budget and one-purchase rules as the first read. While that refund is still settling (job.status refund_pending) even retry=true answers state failed. Without a failed purchase it changes nothing.
+        name: retry
+        in: query
+      - schema:
+          type: boolean
+          description: Captions only; Premium with refresh=true returns invalid_query. Refetch the caption track from YouTube instead of serving the stored copy. Available only for videos outside our index; a pipeline-owned video refuses it with invalid_query.
+        required: false
+        description: Captions only; Premium with refresh=true returns invalid_query. Refetch the caption track from YouTube instead of serving the stored copy. Available only for videos outside our index; a pipeline-owned video refuses it with invalid_query.
+        name: refresh
+        in: query
+      - schema:
+          type: string
+          enum:
+          - mcp-tool
+          description: The surface making this call. The Arcmira MCP server sends mcp-tool so every unlock link in a gate attributes to the directory install. Omit from your own client.
+        required: false
+        description: The surface making this call. The Arcmira MCP server sends mcp-tool so every unlock link in a gate attributes to the directory install. Omit from your own client.
+        name: src
+        in: query
+      responses:
+        '200':
+          description: 'state ready: the transcript (video, quality, source, language, languages, lines or paragraphs, speakers and revision on Premium, rows_billed, as_of, note). state failed (Premium only): the last purchase for this video failed; job and last_attempt say why, nothing was bought, and retry=true buys again.'
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/TranscriptResponse'
+                - $ref: '#/components/schemas/TranscriptFailed'
+                discriminator:
+                  propertyName: state
+                  mapping:
+                    ready: '#/components/schemas/TranscriptResponse'
+                    failed: '#/components/schemas/TranscriptFailed'
+        '202':
+          description: 'state pending: the Premium purchase this read started or joined is in flight; job carries its status and poll interval. No transcript content yet.'
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptPending'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '402':
+          description: quota_exceeded or spend_limit_exceeded. The plan allows Premium but the included credits and the on-demand budget do not cover this video; quote carries the refused price and nothing was charged.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: paid_plan_required. error.unlock names the plan that buys Premium; quote carries the price.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          description: transcript_fetching. The caption track is being fetched now. Retry-After and retry_after_seconds carry the wait; nothing was charged.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            Retry-After:
+              $ref: '#/components/headers/Retry-After'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/transcripts/{video_id}/quote:
+    get:
+      tags:
+      - Transcripts
+      operationId: quote_transcription
+      summary: Quote a whole-video Premium purchase
+      description: 'Optional free quote: the price a Premium read of this video would charge right now, as rows and credits, where the credits would come from, and max_on_demand_cents, the on-demand money the read would need beyond included credits within the account limit. It does not reserve funds or start generation. A video with no known duration, or one past the 12 hour cap, answers 400 invalid_query with param video_id.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - schema:
+          type: string
+          description: YouTube video id, 11 characters.
+        required: true
+        description: YouTube video id, 11 characters.
+        name: video_id
+        in: path
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-Arcmira-Version:
+              $ref: '#/components/headers/X-Arcmira-Version'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptPurchaseQuote'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  responses:
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    CaptionTrack:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Caption track code, e.g. en or de. Pass it as language to select this track.
+        name:
+          type: string
+          description: Track name as YouTube reports it.
+        generated:
+          type: boolean
+          description: True for YouTube automatic captions, false for a track the channel wrote or approved.
+      required:
+      - code
+      - name
+      - generated
+    ErrorResource:
+      oneOf:
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - media_rows
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - fresh_media
+          window_days:
+            type: integer
+          cutoff:
+            type:
+            - string
+            - 'null'
+        required:
+        - kind
+        - window_days
+        - cutoff
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - sidebar_rows
+          section:
+            type: string
+            enum:
+            - topics
+            - entities
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - section
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - counts
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - chart
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - pagination
+          param:
+            type:
+            - string
+            - 'null'
+            enum:
+            - offset
+            - cursor
+            - null
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - premium_transcript
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - filter
+          param:
+            type: string
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - commercial
+          what:
+            type: string
+            enum:
+            - sponsors
+            - recommendations
+            - mention_details
+            - community_review
+            - paid_split
+        required:
+        - kind
+        - what
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - feature
+          feature:
+            type: string
+            enum:
+            - api
+            - export
+        required:
+        - kind
+        - feature
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - rows
+          requested:
+            type:
+            - integer
+            - 'null'
+          remaining:
+            type:
+            - integer
+            - 'null'
+        required:
+        - kind
+        - requested
+        - remaining
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - key
+          scope:
+            type:
+            - string
+            - 'null'
+            enum:
+            - read
+            - monitors:write
+            - trackers:write
+            - recommendations:read
+            - null
+        required:
+        - kind
+        - scope
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - requests
+        required:
+        - kind
+      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
+    TranscriptFailed:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - failed
+        quality:
+          type: string
+          enum:
+          - premium
+        video_id:
+          type: string
+        job:
+          allOf:
+          - $ref: '#/components/schemas/TranscriptionJob'
+          - description: The last Premium purchase for this video. Its state is failed or refunded, or its status is refund_pending while the refund settles.
+        last_attempt:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+              - failed
+              - refund_pending
+              - refunded
+              description: 'How the last purchase ended: failed, refunded (the charge was returned), or refund_pending (the refund is still settling).'
+            error:
+              type: string
+              description: Why it failed.
+          required:
+          - status
+          - error
+          description: 'The failed purchase in brief: job.status and job.error.'
+        note:
+          type: string
+          description: 'What to do next: read again with retry=true to buy the video again, or wait while the refund settles.'
+      required:
+      - state
+      - quality
+      - video_id
+      - job
+      - last_attempt
+      - note
+    TranscriptPending:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - pending
+        quality:
+          type: string
+          enum:
+          - premium
+        video_id:
+          type: string
+        job:
+          allOf:
+          - $ref: '#/components/schemas/TranscriptionJob'
+          - description: The Premium purchase this read started or joined. Read this transcript again after Retry-After (job.status_url is that read); later reads join the same purchase.
+      required:
+      - state
+      - quality
+      - video_id
+      - job
+    TranscriptVideo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: YouTube video id (11 characters).
+        title:
+          type: string
+          description: Video title. Empty when we could not read it.
+        channel_id:
+          type:
+          - string
+          - 'null'
+          description: YouTube channel id of the source channel.
+        channel_name:
+          type:
+          - string
+          - 'null'
+        published_at:
+          type:
+          - string
+          - 'null'
+          description: Publish timestamp. Cite it as the date of anything you quote.
+        duration_seconds:
+          type:
+          - number
+          - 'null'
+          description: Video length in seconds. Null when unknown, which also means the row estimate was unknown.
+        watch_url:
+          type: string
+          description: Canonical YouTube watch URL.
+      required:
+      - id
+      - title
+      - channel_id
+      - channel_name
+      - published_at
+      - duration_seconds
+      - watch_url
+    TranscriptPurchaseQuote:
+      type: object
+      properties:
+        video_id:
+          type: string
+        duration_seconds:
+          type: number
+        billing_scope:
+          type: string
+          enum:
+          - full_video
+        owned:
+          type: boolean
+        eligible:
+          type: boolean
+        upgrade:
+          type: object
+          properties:
+            label:
+              type: string
+            href:
+              type: string
+          required:
+          - label
+          - href
+          description: 'Present when eligible is false: the plan checkout that can buy this transcript, as a button label and an absolute link.'
+        quote:
+          $ref: '#/components/schemas/TranscriptQuote'
+        charge:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum:
+              - rows
+              - credits
+            amount:
+              type: number
+            from:
+              type: string
+              enum:
+              - included
+              - on_demand
+              - mixed
+              description: Where the charge would come from at the current balance.
+          required:
+          - unit
+          - amount
+          - from
+        credits_per_row:
+          type: number
+        max_on_demand_cents:
+          type: number
+        on_demand_cents_per_unit:
+          type: number
+        refund_policy:
+          type: string
+      required:
+      - video_id
+      - duration_seconds
+      - billing_scope
+      - owned
+      - eligible
+      - quote
+      - charge
+      - credits_per_row
+      - max_on_demand_cents
+      - on_demand_cents_per_unit
+      - refund_policy
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - permission_error
+              - quota_exceeded
+              - rate_limit_error
+              - not_found
+              - conflict_error
+              - server_error
+              description: 'The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling.'
+            code:
+              type: string
+              description: 'The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first.'
+            reason:
+              type: string
+              enum:
+              - no_credential
+              - invalid
+              - revoked
+              description: 'Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable.'
+            message:
+              type: string
+              description: One plain line. Names the fix or the unlock.
+            param:
+              type: string
+              description: The query or body parameter the gate refused, when one did.
+            gate:
+              type: string
+              enum:
+              - rows
+              - key
+              - plan
+              - freshness
+              - exposure_law
+              - rate
+              - pagination
+              description: Which boundary refused. Present on every gate error; switch on it without parsing the message.
+            resource:
+              $ref: '#/components/schemas/ErrorResource'
+            unlock:
+              type: object
+              properties:
+                tier:
+                  type: string
+                  description: The plan that lifts the gate.
+                url:
+                  type: string
+                  description: Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim.
+                offer:
+                  type: 'null'
+                  description: Reserved for the agent-discount offer. Always null today.
+                action:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      description: What the call does. send_signup_code sends a verification code to an address for an account key.
+                    method:
+                      type: string
+                      description: HTTP method to use.
+                    url:
+                      type: string
+                      description: Absolute endpoint carrying its ?src= attribution. Call it verbatim.
+                  required:
+                  - kind
+                  - method
+                  - url
+                  description: The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens.
+              required:
+              - tier
+              - url
+              - offer
+              description: How to lift the gate. Present when the gate has an unlock.
+            retry_after_seconds:
+              type: integer
+              description: Present on rate gates. Mirrors the Retry-After header.
+            details:
+              type: object
+              properties:
+                quote:
+                  $ref: '#/components/schemas/RefusedQuote'
+                existing_id:
+                  type: string
+                  description: On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker.
+                limit:
+                  type: integer
+                  description: On tracker_limit, the trackers the plan holds.
+                count:
+                  type: integer
+                  description: On tracker_limit, the trackers the account holds now.
+              description: Machine data the refusal carries for you to act on. Present only on the codes that name a field here.
+            doc_url:
+              type: string
+            request_id:
+              type: string
+          required:
+          - type
+          - code
+          - message
+          - doc_url
+          - request_id
+      required:
+      - error
+      x-arcmira-codes:
+      - code: alert_not_found
+        type: not_found
+        description: A referenced alert row does not exist or belongs to another account.
+      - code: api_not_enabled
+        type: permission_error
+        gate: plan
+        description: The plan does not include API access. unlock.url names the plan that does.
+      - code: appearances_person_only
+        type: invalid_request_error
+        description: Appearance filtering applies to person entities only.
+      - code: channel_not_found
+        type: not_found
+        description: No channel matches the id or slug.
+      - code: email_verification_required
+        type: permission_error
+        description: Verify the account email before adding recipients.
+      - code: entity_not_found
+        type: not_found
+        description: No entity matches the id, slug, or name.
+      - code: feature_not_available
+        type: permission_error
+        gate: plan
+        description: The plan does not include this feature. unlock.url names the plan that does.
+      - code: feedback_not_found
+        type: not_found
+        description: No feedback submission with this id for this account.
+      - code: filter_requires_paid
+        type: permission_error
+        gate: plan
+        description: The parameter in param needs a paid plan; omit it for the free answer.
+      - code: forbidden
+        type: permission_error
+        description: The caller may not perform this operation on this resource.
+      - code: freshness_requires_paid
+        type: permission_error
+        gate: freshness
+        description: The date window is newer than the plan serves; move it before the cutoff or upgrade.
+      - code: id_required
+        type: invalid_request_error
+        description: A filter in param received a name where it takes an id (ent_{n} or UC...). Resolve the name first with GET /v1/entities/resolve and pass best.id or best.youtube_channel_id.
+      - code: idempotency_conflict
+        type: conflict_error
+        description: The Idempotency-Key was sent before with a different request body. Send a new key for a new request.
+      - code: idempotency_result_expired
+        type: conflict_error
+        description: The original one-time signing secret is no longer valid. Use a new request key for a new rotation.
+      - code: insufficient_scope
+        type: permission_error
+        gate: key
+        description: The key lacks the scope this route needs.
+      - code: invalid_api_key
+        type: authentication_error
+        gate: key
+        description: No usable credential. reason says whether none was sent, it is unknown, or it was revoked.
+      - code: invalid_body
+        type: invalid_request_error
+        description: The JSON body failed validation; message names the field.
+      - code: invalid_cursor
+        type: invalid_request_error
+        description: The continuation is invalid, expired, or belongs to another query. Restart without cursor.
+      - code: invalid_email_recipients
+        type: invalid_request_error
+        description: Email recipients failed validation.
+      - code: invalid_feedback_request
+        type: invalid_request_error
+        description: The feedback query or corrections do not fit the feedback type.
+      - code: invalid_idempotency_key
+        type: invalid_request_error
+        description: Idempotency-Key must be 1 to 255 printable ASCII characters (0x21 to 0x7E). param is Idempotency-Key.
+      - code: invalid_query
+        type: invalid_request_error
+        description: A query parameter failed validation; message names it.
+      - code: invalid_slack_integration
+        type: invalid_request_error
+        description: Choose an active Slack integration owned by the account.
+      - code: invalid_video_id
+        type: invalid_request_error
+        description: The video_id path segment is not an 11-character YouTube id.
+      - code: job_requires_account
+        type: authentication_error
+        gate: key
+        description: Transcription jobs belong to an account; sign up for a key.
+      - code: monitor_creation_unavailable
+        type: server_error
+        description: Monitor creation is temporarily unavailable. Retry the same request with the same key.
+      - code: monitor_creation_unconfirmed
+        type: server_error
+        description: Monitor creation could not be confirmed. Retry the same request with the same key.
+      - code: monitor_not_found
+        type: not_found
+        description: No monitor with this id on the account.
+      - code: not_found
+        type: not_found
+        description: No route or resource at this path.
+      - code: owner_only
+        type: permission_error
+        description: Only the team owner may change or test a team monitor's webhook, rotate its secret, or delete it.
+      - code: owner_plan_required
+        type: permission_error
+        description: A team monitor follows the team owner's plan, which does not include this. The owner can upgrade; a member's own plan does not apply.
+      - code: pagination_gated
+        type: permission_error
+        gate: pagination
+        description: Rows past the free window need a paid plan.
+      - code: paid_plan_required
+        type: permission_error
+        description: The operation needs a paid plan. unlock.url names the plan that does.
+      - code: premium_transcript_requested
+        type: permission_error
+        gate: exposure_law
+        description: Premium transcript text needs a plan with Premium transcripts.
+      - code: quota_exceeded
+        type: quota_exceeded
+        gate: rows
+        description: The row pool is spent. unlock.url upgrades or raises the limit.
+      - code: rate_limited
+        type: rate_limit_error
+        gate: rate
+        description: Too many requests in the window. Retry-After carries the wait.
+      - code: recipient_upgrade_required
+        type: permission_error
+        description: The requested email recipient count exceeds the plan allowance.
+      - code: recommendations_not_enabled
+        type: permission_error
+        gate: plan
+        description: Commercial data needs a Pro+ plan.
+      - code: resource_conflict
+        type: conflict_error
+        description: The operation conflicts with existing resource state.
+      - code: scope_too_broad
+        type: invalid_request_error
+        description: The requested exact video scope exceeds the search filename cap; narrow by channel or date.
+      - code: search_unavailable
+        type: server_error
+        description: Transcript search is unavailable (HTTP 503). Retry-After carries the wait.
+      - code: server_error
+        type: server_error
+        description: Unexpected failure. Retry with backoff and quote request_id if it persists.
+      - code: signup_code_invalid
+        type: invalid_request_error
+        description: The signup code is wrong, expired, or spent; message names the attempts left.
+      - code: signup_send_limited
+        type: rate_limit_error
+        description: Verification code sends hit a per-address, per-IP, or per-client cap. Retry-After carries the wait.
+      - code: spend_limit_exceeded
+        type: quota_exceeded
+        description: The purchase would take on-demand spending past the account or seat spend limit this period. Nothing was charged. Raise the limit or wait for the next period, then send a new intent.
+      - code: team_not_found
+        type: not_found
+        description: No team with this id that the caller belongs to.
+      - code: tracker_already_exists
+        type: conflict_error
+        description: The account already tracks this entity. error.details.existing_id identifies the existing tracker.
+      - code: tracker_limit
+        type: permission_error
+        description: The plan's tracker limit is reached. error.details carries limit and count.
+      - code: tracker_not_found
+        type: not_found
+        description: No tracker with this id on the account.
+      - code: transcript_fetching
+        type: server_error
+        description: The caption track is being fetched now (HTTP 503). Retry-After carries the wait; nothing was charged.
+      - code: transcript_requires_account
+        type: authentication_error
+        gate: key
+        description: Full transcripts need an account key; unlock.action sends a signup code.
+      - code: transcript_unavailable
+        type: not_found
+        description: The video has no transcript in the requested lane or language; languages lists what exists.
+      - code: unknown_entity
+        type: invalid_request_error
+        description: An explicit entity_ids value does not resolve to a searchable entity.
+      - code: webhook_not_configured
+        type: conflict_error
+        description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
+    TranscriptionJob:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Transcription request id (UUID).
+        video_id:
+          type: string
+          description: YouTube video id (11 characters).
+        state:
+          type: string
+          enum:
+          - pending
+          - ready
+          - failed
+          - refunded
+          description: 'Coarse outcome: pending until the Premium transcript is servable (ready), the purchase failed, or it was refunded.'
+        status:
+          type: string
+          enum:
+          - queued
+          - downloading
+          - transcribing
+          - analyzing
+          - complete
+          - failed
+          - refund_pending
+          - refunded
+          description: 'Request status. Values: queued (accepted; audio download not started), downloading (fetching the video audio), transcribing (premium speech-to-text is running), analyzing (entity/commercial analysis is running), complete (premium transcript is servable via GET /v1/transcripts/{video_id}), failed (rejected intent or legacy purchase requiring accounting review), refund_pending (refund transaction must still complete), refunded (terminal failure; the charged rows were returned and the unlock this submission bought was revoked).'
+        stage:
+          type:
+          - string
+          - 'null'
+          enum:
+          - queued
+          - transcribing
+          - analyzing
+          - null
+          description: 'User-facing stage: downloading folds into transcribing. Values: queued (waiting to start), transcribing (downloading or transcribing), analyzing (analysis running). Null for terminal statuses and refund_pending.'
+        charge:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum:
+              - credits
+            amount:
+              type: number
+              description: Credits this purchase charged. 0 when a prior unlock made it free.
+            from:
+              type: string
+              enum:
+              - included
+              - on_demand
+              - mixed
+              description: 'Where the credits came from: the included allowance, on-demand usage, or both. Present once the purchase is funded.'
+          required:
+          - unit
+          - amount
+          description: What the purchase charged. Present on durable purchases; absent only on legacy requests.
+        eta_seconds:
+          type: integer
+          description: Estimated seconds until completion, re-derived from live pipeline telemetry on every poll. Only present while the request is in flight; absent on refund_pending, which has no completion ETA.
+        next_poll_seconds:
+          type: integer
+          description: Seconds to sleep before the next poll (also sent as the Retry-After header). Only present while the request is in flight.
+        error:
+          type: string
+          description: Failure reason. Only present when state is failed or refunded, or status is refund_pending.
+        refunded:
+          type: boolean
+          description: True when the charge was returned. Only present when state is failed or refunded, or status is refund_pending (false until the refund lands).
+        created_at:
+          type: string
+          description: When the request was submitted.
+        completed_at:
+          type: string
+          description: When the request reached a terminal status. Absent while in flight.
+        status_url:
+          type: string
+          description: 'Absolute URL to read again for this job: GET /v1/transcripts/{video_id}?quality=premium, which answers 202 while it transcribes, 200 ready once it is done, and 200 failed if it failed.'
+      required:
+      - id
+      - video_id
+      - state
+      - status
+      - stage
+      - created_at
+      - status_url
+      description: A Premium transcript purchase with its processing state, charge and URL for reading the transcript again.
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
+    TranscriptResponse:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - ready
+        video:
+          $ref: '#/components/schemas/TranscriptVideo'
+        quality:
+          type: string
+          enum:
+          - captions
+          - premium
+          description: The requested quality. Premium is served only with an owned unlock; it never falls back to captions.
+        source:
+          type: string
+          enum:
+          - creator_captions
+          - third_party_quick
+          - arcmira_premium
+          description: Public source class. creator_captions were written or approved by the channel, third_party_quick are YouTube automatic captions, arcmira_premium is our own diarized transcript.
+        language:
+          type: string
+          description: The resolved track code, asr-en style when the track is automatic.
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaptionTrack'
+          description: Every caption track the video offers. Empty when we did not list them on this call.
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              start:
+                type: number
+                description: Line start in seconds from the beginning of the video.
+              end:
+                type: number
+                description: Line end in seconds.
+              text:
+                type: string
+              speaker:
+                type: integer
+                description: The person saying this line, present on every Premium line. Join it against speakers[].id.
+              index:
+                type: integer
+                description: Line index, present on every Premium line. Stable within one revision.
+            required:
+            - start
+            - end
+            - text
+          description: Present when timestamps is true. Cite start with watch_url.
+        paragraphs:
+          type: array
+          items:
+            type: object
+            properties:
+              start:
+                type: number
+                description: Paragraph start in seconds.
+              text:
+                type: string
+              speaker:
+                type: integer
+            required:
+            - start
+            - text
+          description: Present when timestamps is false. Lines joined on speaker changes for Premium and on sentence boundaries for captions.
+        speakers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                x-arcmira-ordinal: true
+                description: Speaker id, numbered in the order people first speak. Only meaningful with this read and its revision.
+              name:
+                type: string
+                description: The identified person, or Speaker 1, Speaker 2 and so on for a voice nobody has identified yet.
+              entity_id:
+                type:
+                - string
+                - 'null'
+                description: Public entity id ("ent_{n}") of the identified person. Null when the speaker is unidentified.
+              confidence:
+                type:
+                - string
+                - 'null'
+                description: high when the name was reviewed, low when it is your own identification still awaiting review, null when nobody is identified.
+            required:
+            - id
+            - name
+            - entity_id
+            - confidence
+          description: Premium only. Speaker identification is right most of the time and wrong sometimes; say it came from Arcmira when a name matters.
+        revision:
+          type: string
+          description: Premium reads only. Opaque id of the transcript you were served, the approved corrections on it, and who speaks each line. It changes when any of those change.
+        range:
+          type: object
+          properties:
+            start:
+              type: number
+            end:
+              type: number
+          required:
+          - start
+          - end
+          description: Echoed when you sent start and end. Lines overlapping the window are returned. On captions only the window is billed. An explicit Premium read can purchase the whole video within the account budget; the window only trims the returned content.
+        rows_billed:
+          type: integer
+          description: Caption retrieval rows charged by this call. 0 on a repeat of the same video, quality, language, and range inside the 7 day dedupe window. Premium responses report 0 here even when the read purchased the whole video; this field does not report Premium purchase charges.
+        as_of:
+          type:
+          - string
+          - 'null'
+          description: When the transcript was produced.
+        premium_job:
+          allOf:
+          - $ref: '#/components/schemas/TranscriptionJob'
+          - description: Your open Premium purchase for this video, when captions were served while it transcribes.
+        access:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - permission_error
+              - quota_exceeded
+              - rate_limit_error
+              - not_found
+              - conflict_error
+              - server_error
+              description: 'The error class. It fixes the HTTP status: invalid_request_error 400, authentication_error 401, quota_exceeded 402, permission_error 403, not_found 404, conflict_error 409, rate_limit_error 429, server_error 500. Switch on it for retry and gate handling.'
+            code:
+              type: string
+              description: 'The specific condition, stable and snake_case; doc_url anchors on it. x-arcmira-codes on this schema lists every code with its type, gate and meaning. The list is open: new codes may appear inside an existing type, so switch on type and gate first.'
+            reason:
+              type: string
+              enum:
+              - no_credential
+              - invalid
+              - revoked
+              description: 'Only on invalid_api_key. no_credential: nothing was sent. invalid: a credential was sent and is unknown or malformed. revoked: the key exists and is no longer usable.'
+            message:
+              type: string
+              description: One plain line. Names the fix or the unlock.
+            param:
+              type: string
+              description: The query or body parameter the gate refused, when one did.
+            gate:
+              type: string
+              enum:
+              - rows
+              - key
+              - plan
+              - freshness
+              - exposure_law
+              - rate
+              - pagination
+              description: Which boundary refused. Present on every gate error; switch on it without parsing the message.
+            resource:
+              $ref: '#/components/schemas/ErrorResource'
+            unlock:
+              type: object
+              properties:
+                tier:
+                  type: string
+                  description: The plan that lifts the gate.
+                url:
+                  type: string
+                  description: Absolute upgrade or sign-up URL carrying its ?src= attribution. Use it verbatim.
+                offer:
+                  type: 'null'
+                  description: Reserved for the agent-discount offer. Always null today.
+                action:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      description: What the call does. send_signup_code sends a verification code to an address for an account key.
+                    method:
+                      type: string
+                      description: HTTP method to use.
+                    url:
+                      type: string
+                      description: Absolute endpoint carrying its ?src= attribution. Call it verbatim.
+                  required:
+                  - kind
+                  - method
+                  - url
+                  description: The request that lifts the gate with no human, present when the caller can fix this itself. A key gate carries the signup send here; a plan or quota gate has no action and its url is a page a person opens.
+              required:
+              - tier
+              - url
+              - offer
+              description: How to lift the gate. Present when the gate has an unlock.
+            retry_after_seconds:
+              type: integer
+              description: Present on rate gates. Mirrors the Retry-After header.
+            details:
+              type: object
+              properties:
+                quote:
+                  $ref: '#/components/schemas/RefusedQuote'
+                existing_id:
+                  type: string
+                  description: On tracker_already_exists, the existing tracker id. Reuse it instead of creating another tracker.
+                limit:
+                  type: integer
+                  description: On tracker_limit, the trackers the plan holds.
+                count:
+                  type: integer
+                  description: On tracker_limit, the trackers the account holds now.
+              description: Machine data the refusal carries for you to act on. Present only on the codes that name a field here.
+            doc_url:
+              type: string
+            request_id:
+              type: string
+          required:
+          - type
+          - code
+          - message
+          - doc_url
+          - request_id
+          description: The gate that reduced this response. Present only when something was withheld; carries the same code, gate, and unlock an outright refusal would.
+        note:
+          type: string
+          description: One steering sentence for the agent reading this. On Premium it is the diarization disclosure verbatim.
+      required:
+      - state
+      - video
+      - quality
+      - source
+      - language
+      - languages
+      - rows_billed
+      - as_of
+      - note
+      examples:
+      - video:
+          id: dQw4w9WgXcQ
+          title: TBPN | Tuesday, August 4
+          channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
+          channel_name: TBPN
+          published_at: '2026-08-04T17:00:00.000Z'
+          duration_seconds: 10800
+          watch_url: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+        quality: captions
+        source: creator_captions
+        language: en
+        languages:
+        - code: en
+          name: English
+          generated: false
+        lines:
+        - start: 4787
+          end: 4791.5
+          text: Ramp has been on the show for a while now.
+        - start: 4791.5
+          end: 4796
+          text: The pitch is still the same, spend less time on expenses.
+        rows_billed: 12
+        as_of: '2026-08-04T18:12:00.000Z'
+        note: This transcript is the video's own caption track. `creator_captions` were written or approved by the channel; `third_party_quick` are YouTube's automatic captions and can misspell names and drop punctuation. `language` says which track you got.
+      - video:
+          id: aB3dE5fG7hI
+          title: Moment of Truth | The permitting fight nobody watched
+          channel_id: UClWkDGXEzsh77GAhs90wpXw
+          channel_name: Moment of Truth
+          published_at: '2026-08-19T14:00:00.000Z'
+          duration_seconds: 4500
+          watch_url: https://www.youtube.com/watch?v=aB3dE5fG7hI
+        quality: premium
+        source: arcmira_premium
+        language: en
+        languages:
+        - code: en
+          name: English
+          generated: false
+        lines:
+        - start: 612
+          end: 617.5
+          text: The permit sat in review for nineteen months.
+          speaker: 0
+          index: 0
+        - start: 617.5
+          end: 623
+          text: And the second review started before the first one closed.
+          speaker: 1
+          index: 1
+        speakers:
+        - id: 0
+          name: Dana Whitfield
+          entity_id: 4821
+          confidence: high
+        - id: 1
+          name: Speaker 1
+          entity_id: null
+          confidence: null
+        revision: rev_7f2c1a.0k3m9x
+        rows_billed: 375
+        as_of: '2026-08-19T16:40:00.000Z'
+        note: 'Premium transcripts are Arcmira''s own. Every Premium transcript is diarized: each line carries a speaker. We identify each speaker from the audio, the video, and internal and community review. We are right most of the time and wrong sometimes, so when a name matters, say it came from Arcmira''s speaker identification and cite the line.'
+  headers:
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: arc_sk_*
+externalDocs:
+  description: Official Arcmira API documentation
+  url: https://arcmira.com/docs

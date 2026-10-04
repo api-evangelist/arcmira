@@ -1,0 +1,39 @@
+{
+  "provider": "arcmira",
+  "sources": [
+    "_original/arcmira-v1-openapi.json"
+  ],
+  "outputs": [
+    "arcmira-channels-api-openapi.yml",
+    "arcmira-entities-api-openapi.yml",
+    "arcmira-feedback-api-openapi.yml",
+    "arcmira-mentions-api-openapi.yml",
+    "arcmira-meta-api-openapi.yml",
+    "arcmira-monitors-api-openapi.yml",
+    "arcmira-recommendations-api-openapi.yml",
+    "arcmira-search-api-openapi.yml",
+    "arcmira-trackers-api-openapi.yml",
+    "arcmira-transcriptions-api-openapi.yml",
+    "arcmira-transcripts-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "arcmira-v1-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "arcmira-v1-openapi.json: declared missing tag: Channels",
+    "arcmira-v1-openapi.json: declared missing tag: Entities",
+    "arcmira-v1-openapi.json: declared missing tag: Feedback",
+    "arcmira-v1-openapi.json: declared missing tag: Mentions",
+    "arcmira-v1-openapi.json: declared missing tag: Meta",
+    "arcmira-v1-openapi.json: declared missing tag: Monitors",
+    "arcmira-v1-openapi.json: declared missing tag: Recommendations",
+    "arcmira-v1-openapi.json: declared missing tag: Search",
+    "arcmira-v1-openapi.json: declared missing tag: Trackers",
+    "arcmira-v1-openapi.json: declared missing tag: Transcriptions",
+    "arcmira-v1-openapi.json: declared missing tag: Transcripts",
+    "apis.yml register: written (+11 apis, 12 total)"
+  ],
+  "skipped": []
+}
