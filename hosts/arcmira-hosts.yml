@@ -31,15 +31,6 @@ hosts:
   registrable_domain: arcmira.com
   role: api
   relation: own
-- host: api.arcmira.com`
-  found_by:
-  - pointer
-  types:
-  - DeveloperPortal
-  serves: []
-  registrable_domain: arcmira.com`
-  role: portal
-  relation: other-domain
 - host: arcmira.com
   found_by:
   - pointer

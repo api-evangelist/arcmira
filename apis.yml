@@ -22,7 +22,7 @@ specificationVersion: '0.20'
 
 created: '2026-10-03'
 
-modified: '2026-10-03'
+modified: '2026-10-05'
 
 tags:
 - AI
@@ -89,7 +89,7 @@ common:
 - type: GettingStarted
   url: https://arcmira.com/agent-setup
 - type: DeveloperPortal
-  url: https://api.arcmira.com`
+  url: https://arcmira.com/docs
 - type: APIReference
   url: https://arcmira.com/docs/api-reference/search/retrieve-spoken-transcript-slices-for-one-topic
 - type: GitHubOrganization
@@ -100,13 +100,46 @@ common:
   url: https://arcmira.com
 - type: Documentation
   url: https://arcmira.com/docs
+- type: MCPServer
+  url: mcp/arcmira-mcp.yml
+- type: MCPServer
+  name: 'Arcmira: YouTube Transcript Search (remote MCP, OAuth or account bearer key)'
+  url: https://mcp.arcmira.com/mcp
+- type: MCPServerCard
+  url: https://mcp.arcmira.com/.well-known/mcp/server-card.json
+- type: OAuthProtectedResource
+  url: https://mcp.arcmira.com/.well-known/oauth-protected-resource
+- type: MCPServer
+  name: Arcmira documentation MCP server (public)
+  url: https://arcmira.com/docs/mcp
+- type: AgentSkill
+  url: skills/_index.yml
+  description: Six provider-authored Agent Skills saved verbatim from github.com/arcmira/mcp (plugins/arcmira/skills).
+- type: Documentation
+  name: Usage and billing (credits, on-demand budget, rate limits)
+  url: https://arcmira.com/docs/usage-and-billing
+- type: OpenAPI
+  name: OpenAPI (provider-hosted)
+  url: https://api.arcmira.com/v1/openapi.json
 
 apis:
-- name: Arcmira API
-  description: Search YouTube transcripts via the Arcmira API.
+- name: YouTube Transcript Search API by Arcmira
+  description: Search indexed YouTube and podcast transcripts for timestamped passages, speaker appearances, mentions,
+    sponsors and recommendations. OpenAPI 3.1, API version 1.0.0. Every paid read uses credits from the account's plan,
+    then its on-demand budget; details and rate limits are at https://arcmira.com/docs/usage-and-billing.
   humanURL: https://arcmira.com/docs
   baseURL: https://api.arcmira.com
-  properties: []
+  properties:
+  - type: OpenAPI
+    name: OpenAPI (provider-hosted)
+    url: https://api.arcmira.com/v1/openapi.json
+  - type: Documentation
+    url: https://arcmira.com/docs
+  - type: MCPServer
+    url: mcp/arcmira-mcp.yml
+  - type: Documentation
+    name: Usage and billing
+    url: https://arcmira.com/docs/usage-and-billing
   aid: arcmira:arcmira-api
 - aid: arcmira:arcmira-channels-api
   name: Arcmira Channels API
@@ -364,3 +397,29 @@ x-enrichment:
   artifacts_added: 34
   pass: modular-v1
   engine: identity=local,contract=local,surfaces=local,docs=local,regulatory=local
+x-correction-request:
+  requested: '2026-10-05'
+  source:
+  - https://github.com/api-evangelist/arcmira/issues/1
+  request: 'Issue #1 (zealous1, Arcmira maintainer), verified live 2026-10-05. (1) The DeveloperPortal pointer was https://api.arcmira.com`
+    (trailing backtick); https://arcmira.com/docs returns 200 and an invented /docs path returns a real 404. (2) https://mcp.arcmira.com/.well-known/mcp/server-card.json
+    returns 200: io.github.arcmira/arcmira, title "Arcmira: YouTube Transcript Search", version 0.10.4, remote https://mcp.arcmira.com/mcp
+    (streamable-http), auth oauth2 or bearer, four tools (arcmira_describe, arcmira_execute_read, arcmira_execute_write,
+    arcmira_feedback). An anonymous initialize to https://mcp.arcmira.com/mcp returns 401 with WWW-Authenticate resource_metadata
+    https://mcp.arcmira.com/.well-known/oauth-protected-resource (200, authorization server https://api.arcmira.com).
+    https://arcmira.com/docs/mcp answers initialize and tools/list anonymously (200, "Arcmira API" 1.0.0, three documentation
+    tools). (3) github.com/arcmira/mcp plugins/arcmira/skills holds six SKILL.md files (arcmira, company-watch, compare-shows,
+    find-quotes, person-research, sponsor-research); the hosted https://arcmira.com/.well-known/skills/arcmira/SKILL.md
+    returns 200 but differs from the GitHub copy. (4) registry.npmjs.org/arcmira/latest and pypi.org/pypi/arcmira/json
+    both return 0.4.3 (published 2026-10-04); https://api.arcmira.com/v1/openapi.json is OpenAPI 3.1.0 version 1.0.0.
+    Preferred API display name "YouTube Transcript Search API by Arcmira"; MCP title "Arcmira: YouTube Transcript Search".
+    The usage-and-billing page reads "Every paid read uses credits from your plan, then your on-demand budget." (the
+    issue quoted "A paid read ...").'
+  applied: '2026-10-05'
+  applied_note: DeveloperPortal set to https://arcmira.com/docs and the malformed api.arcmira.com` host removed from
+    hosts/, well-known/ and vendors/. mcp/arcmira-mcp.yml replaced the derived candidate tools with the two deployed
+    servers (research server tools from the public server card, since its tools/list needs a credential; docs server
+    tools from an anonymous tools/list). Six provider skills saved verbatim under skills/ with skills/_index.yml and
+    an AgentSkill pointer. packages/ now records 0.4.3 on npm and PyPI. The umbrella API entry is renamed "YouTube Transcript
+    Search API by Arcmira" with the provider-hosted OpenAPI, docs and usage-and-billing link; the company name stays
+    Arcmira. Per-tag split API names are unchanged. Usage wording recorded as the live page states it.

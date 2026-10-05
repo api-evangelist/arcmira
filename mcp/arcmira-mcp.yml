@@ -1,194 +1,206 @@
-generated: '2026-10-03'
-method: derived
-generator: derive-mcp-candidate.py
+generated: '2026-10-05'
+method: probed
+status: published
+title: 'Arcmira: YouTube Transcript Search'
 source:
-- openapi/_original/arcmira-v1-openapi.json
-status: candidate
+- https://mcp.arcmira.com/.well-known/mcp/server-card.json
+- https://mcp.arcmira.com/mcp
+- https://mcp.arcmira.com/.well-known/oauth-protected-resource
+- https://arcmira.com/docs/mcp
+docs: https://arcmira.com/docs/mcp-server
+summary: 'Arcmira runs two remote MCP servers. The research server "Arcmira: YouTube Transcript Search" (io.github.arcmira/arcmira,
+  version 0.10.4) is at https://mcp.arcmira.com/mcp over Streamable HTTP and requires a credential: an anonymous initialize
+  returns 401 with WWW-Authenticate pointing at https://mcp.arcmira.com/.well-known/oauth-protected-resource; it accepts OAuth
+  (authorization server https://api.arcmira.com) or an arc_sk_ account key as a bearer token. Its four tools are read from
+  the public server card at /.well-known/mcp/server-card.json, since tools/list needs a credential. A separate documentation
+  server at https://arcmira.com/docs/mcp ("Arcmira API" 1.0.0) answers initialize and tools/list anonymously with three documentation
+  tools. Neither is the set of candidate operations previously derived from the OpenAPI.'
 deployment:
-  mode: none
-  auth: unknown
+  mode: remote
+  endpoint: https://mcp.arcmira.com/mcp
+  auth: oauth
   verified: probed
-note: 'No MCP server was found. The pre-flight posted tools/list to /mcp on arcmira.com, api.arcmira.com, docs.arcmira.com; verdict opaque (https://arcmira.com/api/mcp
-  answered 403: the edge authenticates before it routes, which proves nothing either way). Candidate tools below are derived from the 36 operation(s)
-  in the provider''s own OpenAPI (36 listed); they describe what a server WOULD expose, not one that exists.'
+  note: 'OAuth 2 or Authorization: Bearer arc_sk_ account key. Anonymous initialize and tools/list return 401 (authentication_error,
+    no_credential).'
+  endpoints:
+  - name: research
+    title: 'Arcmira: YouTube Transcript Search'
+    url: https://mcp.arcmira.com/mcp
+    version: 0.10.4
+    tools: 4
+    auth: oauth2 or bearer (arc_sk_ account key)
+    tools_source: server card
+  - name: docs
+    url: https://arcmira.com/docs/mcp
+    server_info: Arcmira API 1.0.0
+    tools: 3
+    auth: none
+    tools_source: tools/list (anonymous, 200)
+server:
+  name: io.github.arcmira/arcmira
+  title: 'Arcmira: YouTube Transcript Search'
+  version: 0.10.4
+  transport: streamable-http
+  url: https://mcp.arcmira.com/mcp
+  repository: https://github.com/arcmira/mcp
+  supported_protocol_versions:
+  - '2025-11-25'
+  - '2025-06-18'
+  - '2025-03-26'
+  - '2024-11-05'
+  - '2024-10-07'
+auth:
+  schemes:
+  - oauth2
+  - bearer
+  protected_resource_metadata: https://mcp.arcmira.com/.well-known/oauth-protected-resource
+  authorization_servers:
+  - https://api.arcmira.com
+  scopes:
+  - openid
+  - profile
+  - email
+  - offline_access
+  - read
+  - recommendations:read
+  - monitors:write
+  - trackers:write
+  signup: https://api.arcmira.com/v1/signups?src=mcp-tool
+tool_count: 7
 tools:
-- name: get_health
-  operationId: get_health
-  method: GET
-  path: /v1/health
-  description: Health check
-- name: get_openapi_document
-  operationId: get_openapi_document
-  method: GET
-  path: /v1/openapi.json
-  description: OpenAPI document
-- name: get_me
-  operationId: get_me
-  method: GET
-  path: /v1/me
-  description: Current API key context
-- name: update_my_settings
-  operationId: update_my_settings
-  method: PATCH
-  path: /v1/me/settings
-  description: Set account defaults
-- name: create_signup
-  operationId: create_signup
-  method: POST
-  path: /v1/signups
-  description: Send a verification code to an address
-- name: verify_signup
-  operationId: verify_signup
-  method: POST
-  path: /v1/signups/verify
-  description: Exchange a verification code for an account key
-- name: resolve_entity
-  operationId: resolve_entity
-  method: GET
-  path: /v1/entities/resolve
-  description: A name to one id, before any filter
-- name: get_entity
-  operationId: get_entity
-  method: GET
-  path: /v1/entities/{id}
-  description: Get canonical entity metadata
-- name: list_mentions
-  operationId: list_mentions
-  method: GET
-  path: /v1/mentions
-  description: Search mentions across media
-- name: list_recommendations
-  operationId: list_recommendations
-  method: GET
-  path: /v1/recommendations
-  description: Search recommendations across media
+- name: arcmira_describe
+  title: The arcmira client reference
+  description: 'Returns the reference for the typed arcmira client the execute tools run: method arguments, return fields,
+    entity ID rules, examples, errors, the budget and monitor rules, and documentation links. The optional topic narrows it
+    to a method or subject. Reads no indexed content and bills nothing. Docs: https://arcmira.com/docs/mcp-server'
+  inputs:
+  - topic
+  - intent
+  read_only: true
+  destructive: false
+  server: research
+- name: arcmira_execute_read
+  title: Research with a program
+  description: 'Runs JavaScript against the Arcmira API through the arcmira client: indexed YouTube and podcast transcripts,
+    mentions, sponsors, recommendations, coverage, Premium transcripts (a Premium read of an untranscribed video uses credits
+    from the user''s plan, then the on-demand budget; never ask for cents), and the user''s monitors. Input is an async function
+    body with arcmira, ArcmiraError, and console in scope. Output is bounded JSON with the outcome first, then call/rate/build
+    facts and capped logs. Methods and examples: arcmira_describe. Filters require entity, channel, or video IDs. Limits:
+    30 seconds, 40 API calls, and 12,000 characters of output in total, 3,000 per string, and 100 items per array.'
+  inputs:
+  - code
+  - intent
+  read_only: false
+  destructive: false
+  server: research
+- name: arcmira_execute_write
+  title: Change Arcmira monitors
+  description: 'Runs JavaScript like arcmira_execute_read, with the account writes added: arcmira.monitors.create, arcmira.monitors.update
+    (including paused), arcmira.monitors.addEntities, arcmira.monitors.addName and arcmira.monitors.attachTrackers. Use it
+    only to save what the user asked to follow: list their monitors first, never assume one exists, and ask how they want
+    updates (email or Slack; as it happens, hourly or daily) before creating one. Nothing is deleted; pause instead. Limits:
+    30 seconds, 40 API calls, and 12,000 characters of output in total, 3,000 per string, and 100 items per array.'
+  inputs:
+  - code
+  - intent
+  read_only: false
+  destructive: true
+  server: research
+- name: arcmira_feedback
+  title: Tell Arcmira what went wrong
+  description: Saves a feedback record for the Arcmira team about what was wrong, slow, missing or confusing in a task. Send
+    one when a result was empty, an error, truncated or an ask that did not serve the user, or when the user says something
+    was off. Each call adds a record; repeated calls create separate records. Costs nothing.
+  inputs:
+  - category
+  - note
+  - request_id
+  - call_id
+  - intent
+  read_only: false
+  destructive: false
+  server: research
+- name: search_arcmira_api
+  description: Search across the Arcmira API knowledge base to find relevant information, code examples, API references, and
+    guides. Use this tool when you need to answer questions about Arcmira API, find specific documentation, understand how
+    features work, or locate implementation details. The search returns contextual content with titles and direct links to
+    the documentation pages. If you need the full content of a specific page, use the query_docs_filesystem tool to `head`
+    or `cat` the page path (append `.mdx` to the path returned from search — e.g. a result at `/some/page` is read with `head
+    -200 /some/page.mdx`).
+  inputs:
+  - query
+  server: docs
+- name: query_docs_filesystem_arcmira_api
+  description: 'Run a read-only shell-like query against a virtualized, in-memory filesystem rooted at `/` that contains ONLY
+    the Arcmira API documentation pages and OpenAPI specs. This is NOT a shell on any real machine — nothing runs on the user''s
+    computer, the server host, or any network. The filesystem is a sandbox backed by documentation chunks.
+
+
+    This is how you read documentation pages: there is no separate "get page" tool. To read a page, pass its `.mdx` path to
+    `head` or `cat` — a page at the URL path `/some/page` lives at `/some/page.mdx`. To search the docs with exact keyword
+    or regex matches, use `rg`. To understand the docs structure, use `tree` or `ls`.
+
+
+    **Paths are specific to this site — never guess them.** Discover real paths with `tree / -L 2`, `ls /`, or the search
+    tool before reading. If a path does not exist, that only means the guess was wrong; it does NOT mean the topic is undocumented
+    — use `rg -il "keyword" /` to find where it is covered.
+
+
+    **Workflow:** Start with the search tool for broad or conceptual queries like "how to authenticate" or "rate limiting".
+    Use this tool when you need exact keyword/regex matching, structural exploration, or to read the full content of a specific
+    page by path.
+
+
+    Supported commands: rg (ripgrep), grep, find, tree, ls, cat, head, tail, stat, wc, sort, uniq, cut, sed, awk, jq, plus
+    basic text utilities. No writes, no network, no process control. Run `--help` on any command for usage.
+
+
+    Each call is STATELESS: the working directory always resets to `/` and no shell variables, aliases, or history carry over
+    between calls. If you need to operate in a subdirectory, chain commands in one call with `&&` or pass absolute paths (e.g.,
+    `cd /some-directory && ls` or `ls /some-directory`). Do NOT assume that `cd` in one call affects the next call.
+
+
+    Examples (replace the placeholder paths with real ones from `tree` or search):
+
+    - `tree / -L 2` — see the top-level directory layout
+
+    - `rg -il "rate limit" /` — find all files mentioning "rate limit"
+
+    - `rg -C 3 "apiKey" /some-directory/` — show matches with 3 lines of context around each hit
+
+    - `head -80 /some/page.mdx` — read the top 80 lines of a specific page
+
+    - `head -80 /page-one.mdx /page-two.mdx /section/page-three.mdx` — read multiple pages in one call
+
+    - `cat /some/page.mdx` — read a full page when you need everything
+
+    - `cat /openapi/openapi/arcmira-v1.json | jq ''.paths | keys''` — list OpenAPI endpoints
+
+
+    OpenAPI specs for this site are mounted at: `/openapi/openapi/arcmira-v1.json`. Use them to answer questions about endpoints,
+    request/response schemas, parameters, and authentication.
+
+
+    Output is truncated to 30KB per call. Prefer targeted `rg -C` or `head -N` over broad `cat` on large files. To read only
+    the relevant sections of a large file, use `rg -C 3 "pattern" /path/file.mdx`. Batch multiple file reads into a single
+    `head` or `cat` call whenever possible.
+
+
+    When referencing pages in your response to the user, convert filesystem paths to URL paths by removing the `.mdx` extension.
+    For example, `/some/page.mdx` becomes `/some/page`.'
+  inputs:
+  - command
+  server: docs
 - name: submit_feedback
-  operationId: submit_feedback
-  method: POST
-  path: /v1/feedback
-  description: Submit feedback and corrections for a prior API query
-- name: get_feedback
-  operationId: get_feedback
-  method: GET
-  path: /v1/feedback/{feedback_id}
-  description: Read back a feedback submission and its review status
-- name: list_channel_sponsors
-  operationId: list_channel_sponsors
-  method: GET
-  path: /v1/channels/{channel_id}/sponsors
-  description: List recurring channel sponsors
-- name: search
-  operationId: search
-  method: GET
-  path: /v1/search
-  description: Retrieve spoken transcript slices for one topic
-- name: get_entity_momentum
-  operationId: get_entity_momentum
-  method: GET
-  path: /v1/entities/{id}/momentum
-  description: Spoken-web heat for one entity
-- name: get_channel_coverage
-  operationId: get_channel_coverage
-  method: GET
-  path: /v1/channels/{channel_id}/coverage
-  description: What the index holds for a channel
-- name: list_channel_videos
-  operationId: list_channel_videos
-  method: GET
-  path: /v1/channels/{channel_id}/videos
-  description: Newest indexed videos of a channel
-- name: count_mentions
-  operationId: count_mentions
-  method: GET
-  path: /v1/mentions/counts
-  description: Ranked catalog counts of who a set of channels mention
-- name: list_monitors
-  operationId: list_monitors
-  method: GET
-  path: /v1/monitors
-  description: List monitors
-- name: create_monitor
-  operationId: create_monitor
-  method: POST
-  path: /v1/monitors
-  description: Create monitor
-- name: update_monitor
-  operationId: update_monitor
-  method: PATCH
-  path: /v1/monitors/{id}
-  description: Update monitor
-- name: delete_monitor
-  operationId: delete_monitor
-  method: DELETE
-  path: /v1/monitors/{id}
-  description: Delete monitor
-- name: rotate_monitor_webhook_secret
-  operationId: rotate_monitor_webhook_secret
-  method: POST
-  path: /v1/monitors/{id}/webhook-secret/rotate
-  description: Rotate the monitor webhook signing secret
-- name: list_monitor_trackers
-  operationId: list_monitor_trackers
-  method: GET
-  path: /v1/monitors/{id}/trackers
-  description: List monitor trackers
-- name: add_monitor_trackers
-  operationId: add_monitor_trackers
-  method: POST
-  path: /v1/monitors/{id}/trackers
-  description: Add trackers to monitor
-- name: list_monitor_alerts
-  operationId: list_monitor_alerts
-  method: GET
-  path: /v1/monitors/{id}/alerts
-  description: List recent monitor alerts
-- name: add_monitor_entities
-  operationId: add_monitor_entities
-  method: POST
-  path: /v1/monitors/{id}/entities
-  description: Follow entities in a monitor by id or exact name
-- name: list_slack_integrations
-  operationId: list_slack_integrations
-  method: GET
-  path: /v1/integrations/slack
-  description: List connected Slack workspaces
-- name: list_trackers
-  operationId: list_trackers
-  method: GET
-  path: /v1/trackers
-  description: List trackers
-- name: create_tracker
-  operationId: create_tracker
-  method: POST
-  path: /v1/trackers
-  description: Create tracker
-- name: update_tracker
-  operationId: update_tracker
-  method: PATCH
-  path: /v1/trackers/{id}
-  description: Update tracker
-- name: delete_tracker
-  operationId: delete_tracker
-  method: DELETE
-  path: /v1/trackers/{id}
-  description: Delete tracker
-- name: list_tracker_alerts
-  operationId: list_tracker_alerts
-  method: GET
-  path: /v1/trackers/{id}/alerts
-  description: List recent tracker alerts
-- name: get_transcript
-  operationId: get_transcript
-  method: GET
-  path: /v1/transcripts/{video_id}
-  description: Get a video transcript
-- name: quote_transcription
-  operationId: quote_transcription
-  method: GET
-  path: /v1/transcripts/{video_id}/quote
-  description: Quote a whole-video Premium purchase
-- name: list_transcriptions
-  operationId: list_transcriptions
-  method: GET
-  path: /v1/transcriptions
-  description: List your transcription requests
+  description: Report a problem with this documentation site so the docs team can fix it. Use when a documentation page is
+    incorrect, outdated, confusing, incomplete, or has a broken example. This is for feedback about the documentation content
+    itself — not for product support requests or feedback about this tool or assistant.
+  inputs:
+  - path
+  - feedback
+  server: docs
+x-evidence:
+  probed: '2026-10-05'
+  method: GET server-card.json (200); POST initialize + tools/list to mcp.arcmira.com/mcp (401, resource_metadata in WWW-Authenticate);
+    POST initialize + tools/list to arcmira.com/docs/mcp (200)
+  status: 200
