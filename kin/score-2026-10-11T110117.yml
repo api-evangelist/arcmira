@@ -1,0 +1,46 @@
+# Kin Score artifact — arcmira — 2026-10-11T110117
+# The API Evangelist rating (https://github.com/api-evangelist/kin-score). Generated; do not edit.
+---
+kin_score:
+  slug: arcmira
+  schema_version: 0.23.0
+  scored_at: '2026-10-11'
+  run_ts: 2026-10-11T110117
+  composite: 68.1
+  band: exemplar
+  facets:
+    discoverability: 73.2
+    contract_quality: 67.3
+    contract_governance: 79.1
+    operational_transparency: 21.1
+    developer_ergonomics: 64.3
+    access_clarity: 73.2
+  agent_readiness:
+    score: 60.1
+    band: agent-native
+    dimensions:
+      spec_presence: true
+      agentic_access: false
+      reversibility_documented: false
+      mcp_server: false
+      auth_clarity: served
+      idempotency: verified
+      error_semantics: verified
+      openapi_examples: partial
+      rate_limit_signal: verified
+      event_surface_described: false
+      agent_skills: false
+      well_known_catalog: true
+      consent_identity: false
+      agent_card: conformant
+      dry_run_mode: false
+      delegated_identity: served
+      protected_resource_metadata: verified
+      dynamic_client_registration: true
+      agentic_commerce: false
+  regulatory:
+    applies: true
+    regime: Horizontal (data, software, accessibility, platform)
+    regime_id: horizontal
+    score: 22.7
+    matched_via: fallback
