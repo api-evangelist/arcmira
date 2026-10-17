@@ -33,7 +33,19 @@
     "arcmira-v1-openapi.json: declared missing tag: Trackers",
     "arcmira-v1-openapi.json: declared missing tag: Transcriptions",
     "arcmira-v1-openapi.json: declared missing tag: Transcripts",
-    "apis.yml register: written (+11 apis, 12 total)"
+    "apis.yml register: written (+0 apis, 11 total)"
   ],
-  "skipped": []
+  "skipped": [
+    "arcmira-channels-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-entities-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-feedback-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-mentions-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-meta-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-monitors-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-recommendations-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-search-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-trackers-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-transcriptions-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "arcmira-transcripts-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }

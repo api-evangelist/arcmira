@@ -230,82 +230,29 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
-  responses:
-    RateLimited:
-      description: Rate limit exceeded. Retry-After carries the wait.
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-        RateLimit-Limit:
-          $ref: '#/components/headers/RateLimit-Limit'
-        RateLimit-Remaining:
-          $ref: '#/components/headers/RateLimit-Remaining'
-        RateLimit-Reset:
-          $ref: '#/components/headers/RateLimit-Reset'
-        Retry-After:
-          $ref: '#/components/headers/Retry-After'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Not found
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InvalidRequest:
-      description: Invalid request
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    AuthenticationError:
-      description: Authentication error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
+    TranscriptPending:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - pending
+        quality:
+          type: string
+          enum:
+          - premium
+        video_id:
+          type: string
+        job:
+          allOf:
+          - $ref: '#/components/schemas/TranscriptionJob'
+          - description: The Premium purchase this read started or joined. Read this transcript again after Retry-After (job.status_url is that read); later reads join the same purchase.
+      required:
+      - state
+      - quality
+      - video_id
+      - job
     CaptionTrack:
       type: object
       properties:
@@ -322,6 +269,179 @@ components:
       - code
       - name
       - generated
+    TranscriptVideo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: YouTube video id (11 characters).
+        title:
+          type: string
+          description: Video title. Empty when we could not read it.
+        channel_id:
+          type:
+          - string
+          - 'null'
+          description: YouTube channel id of the source channel.
+        channel_name:
+          type:
+          - string
+          - 'null'
+        published_at:
+          type:
+          - string
+          - 'null'
+          description: Publish timestamp. Cite it as the date of anything you quote.
+        duration_seconds:
+          type:
+          - number
+          - 'null'
+          description: Video length in seconds. Null when unknown, which also means the row estimate was unknown.
+        watch_url:
+          type: string
+          description: Canonical YouTube watch URL.
+      required:
+      - id
+      - title
+      - channel_id
+      - channel_name
+      - published_at
+      - duration_seconds
+      - watch_url
+    TranscriptFailed:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - failed
+        quality:
+          type: string
+          enum:
+          - premium
+        video_id:
+          type: string
+        job:
+          allOf:
+          - $ref: '#/components/schemas/TranscriptionJob'
+          - description: The last Premium purchase for this video. Its state is failed or refunded, or its status is refund_pending while the refund settles.
+        last_attempt:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+              - failed
+              - refund_pending
+              - refunded
+              description: 'How the last purchase ended: failed, refunded (the charge was returned), or refund_pending (the refund is still settling).'
+            error:
+              type: string
+              description: Why it failed.
+          required:
+          - status
+          - error
+          description: 'The failed purchase in brief: job.status and job.error.'
+        note:
+          type: string
+          description: 'What to do next: read again with retry=true to buy the video again, or wait while the refund settles.'
+      required:
+      - state
+      - quality
+      - video_id
+      - job
+      - last_attempt
+      - note
+    TranscriptionJob:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Transcription request id (UUID).
+        video_id:
+          type: string
+          description: YouTube video id (11 characters).
+        state:
+          type: string
+          enum:
+          - pending
+          - ready
+          - failed
+          - refunded
+          description: 'Coarse outcome: pending until the Premium transcript is servable (ready), the purchase failed, or it was refunded.'
+        status:
+          type: string
+          enum:
+          - queued
+          - downloading
+          - transcribing
+          - analyzing
+          - complete
+          - failed
+          - refund_pending
+          - refunded
+          description: 'Request status. Values: queued (accepted; audio download not started), downloading (fetching the video audio), transcribing (premium speech-to-text is running), analyzing (entity/commercial analysis is running), complete (premium transcript is servable via GET /v1/transcripts/{video_id}), failed (rejected intent or legacy purchase requiring accounting review), refund_pending (refund transaction must still complete), refunded (terminal failure; the charged rows were returned and the unlock this submission bought was revoked).'
+        stage:
+          type:
+          - string
+          - 'null'
+          enum:
+          - queued
+          - transcribing
+          - analyzing
+          - null
+          description: 'User-facing stage: downloading folds into transcribing. Values: queued (waiting to start), transcribing (downloading or transcribing), analyzing (analysis running). Null for terminal statuses and refund_pending.'
+        charge:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum:
+              - credits
+            amount:
+              type: number
+              description: Credits this purchase charged. 0 when a prior unlock made it free.
+            from:
+              type: string
+              enum:
+              - included
+              - on_demand
+              - mixed
+              description: 'Where the credits came from: the included allowance, on-demand usage, or both. Present once the purchase is funded.'
+          required:
+          - unit
+          - amount
+          description: What the purchase charged. Present on durable purchases; absent only on legacy requests.
+        eta_seconds:
+          type: integer
+          description: Estimated seconds until completion, re-derived from live pipeline telemetry on every poll. Only present while the request is in flight; absent on refund_pending, which has no completion ETA.
+        next_poll_seconds:
+          type: integer
+          description: Seconds to sleep before the next poll (also sent as the Retry-After header). Only present while the request is in flight.
+        error:
+          type: string
+          description: Failure reason. Only present when state is failed or refunded, or status is refund_pending.
+        refunded:
+          type: boolean
+          description: True when the charge was returned. Only present when state is failed or refunded, or status is refund_pending (false until the refund lands).
+        created_at:
+          type: string
+          description: When the request was submitted.
+        completed_at:
+          type: string
+          description: When the request reached a terminal status. Absent while in flight.
+        status_url:
+          type: string
+          description: 'Absolute URL to read again for this job: GET /v1/transcripts/{video_id}?quality=premium, which answers 202 while it transcribes, 200 ready once it is done, and 200 failed if it failed.'
+      required:
+      - id
+      - video_id
+      - state
+      - status
+      - stage
+      - created_at
+      - status_url
+      description: A Premium transcript purchase with its processing state, charge and URL for reading the transcript again.
     ErrorResource:
       oneOf:
       - type: object
@@ -497,180 +617,18 @@ components:
         required:
         - kind
       description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    TranscriptFailed:
+    TranscriptQuote:
       type: object
       properties:
-        state:
-          type: string
-          enum:
-          - failed
-        quality:
-          type: string
-          enum:
-          - premium
-        video_id:
-          type: string
-        job:
-          allOf:
-          - $ref: '#/components/schemas/TranscriptionJob'
-          - description: The last Premium purchase for this video. Its state is failed or refunded, or its status is refund_pending while the refund settles.
-        last_attempt:
-          type: object
-          properties:
-            status:
-              type: string
-              enum:
-              - failed
-              - refund_pending
-              - refunded
-              description: 'How the last purchase ended: failed, refunded (the charge was returned), or refund_pending (the refund is still settling).'
-            error:
-              type: string
-              description: Why it failed.
-          required:
-          - status
-          - error
-          description: 'The failed purchase in brief: job.status and job.error.'
-        note:
-          type: string
-          description: 'What to do next: read again with retry=true to buy the video again, or wait while the refund settles.'
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
       required:
-      - state
-      - quality
-      - video_id
-      - job
-      - last_attempt
-      - note
-    TranscriptPending:
-      type: object
-      properties:
-        state:
-          type: string
-          enum:
-          - pending
-        quality:
-          type: string
-          enum:
-          - premium
-        video_id:
-          type: string
-        job:
-          allOf:
-          - $ref: '#/components/schemas/TranscriptionJob'
-          - description: The Premium purchase this read started or joined. Read this transcript again after Retry-After (job.status_url is that read); later reads join the same purchase.
-      required:
-      - state
-      - quality
-      - video_id
-      - job
-    TranscriptVideo:
-      type: object
-      properties:
-        id:
-          type: string
-          description: YouTube video id (11 characters).
-        title:
-          type: string
-          description: Video title. Empty when we could not read it.
-        channel_id:
-          type:
-          - string
-          - 'null'
-          description: YouTube channel id of the source channel.
-        channel_name:
-          type:
-          - string
-          - 'null'
-        published_at:
-          type:
-          - string
-          - 'null'
-          description: Publish timestamp. Cite it as the date of anything you quote.
-        duration_seconds:
-          type:
-          - number
-          - 'null'
-          description: Video length in seconds. Null when unknown, which also means the row estimate was unknown.
-        watch_url:
-          type: string
-          description: Canonical YouTube watch URL.
-      required:
-      - id
-      - title
-      - channel_id
-      - channel_name
-      - published_at
-      - duration_seconds
-      - watch_url
-    TranscriptPurchaseQuote:
-      type: object
-      properties:
-        video_id:
-          type: string
-        duration_seconds:
-          type: number
-        billing_scope:
-          type: string
-          enum:
-          - full_video
-        owned:
-          type: boolean
-        eligible:
-          type: boolean
-        upgrade:
-          type: object
-          properties:
-            label:
-              type: string
-            href:
-              type: string
-          required:
-          - label
-          - href
-          description: 'Present when eligible is false: the plan checkout that can buy this transcript, as a button label and an absolute link.'
-        quote:
-          $ref: '#/components/schemas/TranscriptQuote'
-        charge:
-          type: object
-          properties:
-            unit:
-              type: string
-              enum:
-              - rows
-              - credits
-            amount:
-              type: number
-            from:
-              type: string
-              enum:
-              - included
-              - on_demand
-              - mixed
-              description: Where the charge would come from at the current balance.
-          required:
-          - unit
-          - amount
-          - from
-        credits_per_row:
-          type: number
-        max_on_demand_cents:
-          type: number
-        on_demand_cents_per_unit:
-          type: number
-        refund_policy:
-          type: string
-      required:
-      - video_id
-      - duration_seconds
-      - billing_scope
-      - owned
-      - eligible
-      - quote
-      - charge
-      - credits_per_row
-      - max_on_demand_cents
-      - on_demand_cents_per_unit
-      - refund_policy
+      - quarters
+      - rows
     Error:
       type: object
       properties:
@@ -958,108 +916,6 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
-    TranscriptionJob:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Transcription request id (UUID).
-        video_id:
-          type: string
-          description: YouTube video id (11 characters).
-        state:
-          type: string
-          enum:
-          - pending
-          - ready
-          - failed
-          - refunded
-          description: 'Coarse outcome: pending until the Premium transcript is servable (ready), the purchase failed, or it was refunded.'
-        status:
-          type: string
-          enum:
-          - queued
-          - downloading
-          - transcribing
-          - analyzing
-          - complete
-          - failed
-          - refund_pending
-          - refunded
-          description: 'Request status. Values: queued (accepted; audio download not started), downloading (fetching the video audio), transcribing (premium speech-to-text is running), analyzing (entity/commercial analysis is running), complete (premium transcript is servable via GET /v1/transcripts/{video_id}), failed (rejected intent or legacy purchase requiring accounting review), refund_pending (refund transaction must still complete), refunded (terminal failure; the charged rows were returned and the unlock this submission bought was revoked).'
-        stage:
-          type:
-          - string
-          - 'null'
-          enum:
-          - queued
-          - transcribing
-          - analyzing
-          - null
-          description: 'User-facing stage: downloading folds into transcribing. Values: queued (waiting to start), transcribing (downloading or transcribing), analyzing (analysis running). Null for terminal statuses and refund_pending.'
-        charge:
-          type: object
-          properties:
-            unit:
-              type: string
-              enum:
-              - credits
-            amount:
-              type: number
-              description: Credits this purchase charged. 0 when a prior unlock made it free.
-            from:
-              type: string
-              enum:
-              - included
-              - on_demand
-              - mixed
-              description: 'Where the credits came from: the included allowance, on-demand usage, or both. Present once the purchase is funded.'
-          required:
-          - unit
-          - amount
-          description: What the purchase charged. Present on durable purchases; absent only on legacy requests.
-        eta_seconds:
-          type: integer
-          description: Estimated seconds until completion, re-derived from live pipeline telemetry on every poll. Only present while the request is in flight; absent on refund_pending, which has no completion ETA.
-        next_poll_seconds:
-          type: integer
-          description: Seconds to sleep before the next poll (also sent as the Retry-After header). Only present while the request is in flight.
-        error:
-          type: string
-          description: Failure reason. Only present when state is failed or refunded, or status is refund_pending.
-        refunded:
-          type: boolean
-          description: True when the charge was returned. Only present when state is failed or refunded, or status is refund_pending (false until the refund lands).
-        created_at:
-          type: string
-          description: When the request was submitted.
-        completed_at:
-          type: string
-          description: When the request reached a terminal status. Absent while in flight.
-        status_url:
-          type: string
-          description: 'Absolute URL to read again for this job: GET /v1/transcripts/{video_id}?quality=premium, which answers 202 while it transcribes, 200 ready once it is done, and 200 failed if it failed.'
-      required:
-      - id
-      - video_id
-      - state
-      - status
-      - stage
-      - created_at
-      - status_url
-      description: A Premium transcript purchase with its processing state, charge and URL for reading the transcript again.
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
-      required:
-      - quarters
-      - rows
     RefusedQuote:
       allOf:
       - $ref: '#/components/schemas/TranscriptQuote'
@@ -1400,33 +1256,177 @@ components:
         rows_billed: 375
         as_of: '2026-08-19T16:40:00.000Z'
         note: 'Premium transcripts are Arcmira''s own. Every Premium transcript is diarized: each line carries a speaker. We identify each speaker from the audio, the video, and internal and community review. We are right most of the time and wrong sometimes, so when a name matters, say it came from Arcmira''s speaker identification and cite the line.'
+    TranscriptPurchaseQuote:
+      type: object
+      properties:
+        video_id:
+          type: string
+        duration_seconds:
+          type: number
+        billing_scope:
+          type: string
+          enum:
+          - full_video
+        owned:
+          type: boolean
+        eligible:
+          type: boolean
+        upgrade:
+          type: object
+          properties:
+            label:
+              type: string
+            href:
+              type: string
+          required:
+          - label
+          - href
+          description: 'Present when eligible is false: the plan checkout that can buy this transcript, as a button label and an absolute link.'
+        quote:
+          $ref: '#/components/schemas/TranscriptQuote'
+        charge:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum:
+              - rows
+              - credits
+            amount:
+              type: number
+            from:
+              type: string
+              enum:
+              - included
+              - on_demand
+              - mixed
+              description: Where the charge would come from at the current balance.
+          required:
+          - unit
+          - amount
+          - from
+        credits_per_row:
+          type: number
+        max_on_demand_cents:
+          type: number
+        on_demand_cents_per_unit:
+          type: number
+        refund_policy:
+          type: string
+      required:
+      - video_id
+      - duration_seconds
+      - billing_scope
+      - owned
+      - eligible
+      - quote
+      - charge
+      - credits_per_row
+      - max_on_demand_cents
+      - on_demand_cents_per_unit
+      - refund_policy
   headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    RateLimit-Remaining:
-      description: Requests left in the current window.
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
       schema:
         type: integer
     RateLimit-Reset:
       description: Unix time in seconds when the current window ends.
       schema:
         type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
     Retry-After:
       description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
       schema:
         type: integer
     X-Request-Id:
       description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
       schema:
         type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+  responses:
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

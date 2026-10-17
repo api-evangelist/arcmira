@@ -86,7 +86,113 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
+  responses:
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
     TranscriptionJob:
       type: object
       properties:
@@ -177,255 +283,6 @@ components:
       - created_at
       - status_url
       description: A Premium transcript purchase with its processing state, charge and URL for reading the transcript again.
-    RefusedQuote:
-      allOf:
-      - $ref: '#/components/schemas/TranscriptQuote'
-      - type: object
-        properties:
-          charge:
-            type: object
-            properties:
-              unit:
-                type: string
-                enum:
-                - rows
-                - credits
-              amount:
-                type: number
-              from:
-                type: string
-                enum:
-                - included
-                - on_demand
-                - mixed
-                description: Where the charge would come from at the current balance.
-            required:
-            - unit
-            - amount
-            - from
-            description: What the purchase would charge at the current balance. Absent when no current price could be read.
-          max_on_demand_cents:
-            type: integer
-            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
-      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
-    ErrorResource:
-      oneOf:
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - media_rows
-          beyond_row:
-            type: integer
-        required:
-        - kind
-        - beyond_row
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - fresh_media
-          window_days:
-            type: integer
-          cutoff:
-            type:
-            - string
-            - 'null'
-        required:
-        - kind
-        - window_days
-        - cutoff
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - sidebar_rows
-          section:
-            type: string
-            enum:
-            - topics
-            - entities
-          beyond_row:
-            type: integer
-        required:
-        - kind
-        - section
-        - beyond_row
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - counts
-        required:
-        - kind
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - chart
-        required:
-        - kind
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - pagination
-          param:
-            type:
-            - string
-            - 'null'
-            enum:
-            - offset
-            - cursor
-            - null
-        required:
-        - kind
-        - param
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - premium_transcript
-        required:
-        - kind
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - filter
-          param:
-            type: string
-        required:
-        - kind
-        - param
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - commercial
-          what:
-            type: string
-            enum:
-            - sponsors
-            - recommendations
-            - mention_details
-            - community_review
-            - paid_split
-        required:
-        - kind
-        - what
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - feature
-          feature:
-            type: string
-            enum:
-            - api
-            - export
-        required:
-        - kind
-        - feature
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - rows
-          requested:
-            type:
-            - integer
-            - 'null'
-          remaining:
-            type:
-            - integer
-            - 'null'
-        required:
-        - kind
-        - requested
-        - remaining
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - key
-          scope:
-            type:
-            - string
-            - 'null'
-            enum:
-            - read
-            - monitors:write
-            - trackers:write
-            - recommendations:read
-            - null
-        required:
-        - kind
-        - scope
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - requests
-        required:
-        - kind
-      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
-      required:
-      - quarters
-      - rows
-    TranscriptionListResponse:
-      type: object
-      properties:
-        requests:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/TranscriptionJob'
-            - type: object
-              properties:
-                title:
-                  type:
-                  - string
-                  - 'null'
-                  description: Video title for display. Null when unknown.
-              required:
-              - title
-            description: A Premium transcript purchase with its processing state, charge and URL for reading the transcript again.
-          description: Your requests in descending creation time and id order, up to the requested limit.
-        has_more:
-          type: boolean
-          description: True when another page exists in this traversal.
-        next_cursor:
-          type:
-          - string
-          - 'null'
-          description: Signed continuation for the same filter, limit and credential; null on the last page.
-      required:
-      - requests
-      - has_more
-      - next_cursor
     Error:
       type: object
       properties:
@@ -713,100 +570,243 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
-  responses:
-    RateLimited:
-      description: Rate limit exceeded. Retry-After carries the wait.
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-        RateLimit-Limit:
-          $ref: '#/components/headers/RateLimit-Limit'
-        RateLimit-Remaining:
-          $ref: '#/components/headers/RateLimit-Remaining'
-        RateLimit-Reset:
-          $ref: '#/components/headers/RateLimit-Reset'
-        Retry-After:
-          $ref: '#/components/headers/Retry-After'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Not found
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InvalidRequest:
-      description: Invalid request
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    AuthenticationError:
-      description: Authentication error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    ErrorResource:
+      oneOf:
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - media_rows
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - fresh_media
+          window_days:
+            type: integer
+          cutoff:
+            type:
+            - string
+            - 'null'
+        required:
+        - kind
+        - window_days
+        - cutoff
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - sidebar_rows
+          section:
+            type: string
+            enum:
+            - topics
+            - entities
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - section
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - counts
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - chart
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - pagination
+          param:
+            type:
+            - string
+            - 'null'
+            enum:
+            - offset
+            - cursor
+            - null
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - premium_transcript
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - filter
+          param:
+            type: string
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - commercial
+          what:
+            type: string
+            enum:
+            - sponsors
+            - recommendations
+            - mention_details
+            - community_review
+            - paid_split
+        required:
+        - kind
+        - what
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - feature
+          feature:
+            type: string
+            enum:
+            - api
+            - export
+        required:
+        - kind
+        - feature
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - rows
+          requested:
+            type:
+            - integer
+            - 'null'
+          remaining:
+            type:
+            - integer
+            - 'null'
+        required:
+        - kind
+        - requested
+        - remaining
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - key
+          scope:
+            type:
+            - string
+            - 'null'
+            enum:
+            - read
+            - monitors:write
+            - trackers:write
+            - recommendations:read
+            - null
+        required:
+        - kind
+        - scope
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - requests
+        required:
+        - kind
+      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
+    TranscriptionListResponse:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/TranscriptionJob'
+            - type: object
+              properties:
+                title:
+                  type:
+                  - string
+                  - 'null'
+                  description: Video title for display. Null when unknown.
+              required:
+              - title
+            description: A Premium transcript purchase with its processing state, charge and URL for reading the transcript again.
+          description: Your requests in descending creation time and id order, up to the requested limit.
+        has_more:
+          type: boolean
+          description: True when another page exists in this traversal.
+        next_cursor:
+          type:
+          - string
+          - 'null'
+          description: Signed continuation for the same filter, limit and credential; null on the last page.
+      required:
+      - requests
+      - has_more
+      - next_cursor
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
   headers:
-    X-Request-Id:
-      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+    RateLimit-Remaining:
+      description: Requests left in the current window.
       schema:
-        type: string
+        type: integer
     X-Arcmira-Version:
       description: The API version that answered. Always v1.
       schema:
         type: string
         enum:
         - v1
-    RateLimit-Remaining:
-      description: Requests left in the current window.
-      schema:
-        type: integer
     RateLimit-Limit:
       description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
       schema:
         type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
     RateLimit-Reset:
       description: Unix time in seconds when the current window ends.
       schema:

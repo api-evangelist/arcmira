@@ -310,89 +310,59 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
-  responses:
-    RateLimited:
-      description: Rate limit exceeded. Retry-After carries the wait.
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-        RateLimit-Limit:
-          $ref: '#/components/headers/RateLimit-Limit'
-        RateLimit-Remaining:
-          $ref: '#/components/headers/RateLimit-Remaining'
-        RateLimit-Reset:
-          $ref: '#/components/headers/RateLimit-Reset'
-        Retry-After:
-          $ref: '#/components/headers/Retry-After'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Not found
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InvalidRequest:
-      description: Invalid request
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    AuthenticationError:
-      description: Authentication error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    MeSettingsResponse:
+    AccountSettings:
       type: object
       properties:
-        settings:
-          $ref: '#/components/schemas/AccountSettings'
+        transcripts:
+          $ref: '#/components/schemas/TranscriptSettings'
       required:
-      - settings
+      - transcripts
+      description: Account defaults every key of this account resolves against. Set them with PATCH /v1/me/settings.
+    SignupSentResponse:
+      type: object
+      properties:
+        next:
+          type: object
+          properties:
+            method:
+              type: string
+              enum:
+              - POST
+              description: Always POST.
+            url:
+              type: string
+              description: 'The verify call, absolute: POST it with { email, code } once the code arrives.'
+          required:
+          - method
+          - url
+          description: The call that completes the signup.
+        expires_in:
+          type: integer
+          description: Seconds the code stays valid, from the moment it was sent.
+      required:
+      - next
+      - expires_in
+    TranscriptSettings:
+      type: object
+      properties:
+        quality:
+          type: string
+          enum:
+          - captions
+          - premium
+          description: 'Default transcript quality. Platform default: captions.'
+        language:
+          type: string
+          description: 'Default comma-separated caption language priority list, tried in order. Platform default: en.'
+        timestamps:
+          type: boolean
+          description: 'Default for the timestamps parameter. Platform default: true, which returns lines[].'
+      required:
+      - quality
+      - language
+      - timestamps
+      description: What a transcript request that names no parameter of its own receives.
     ErrorResource:
       oneOf:
       - type: object
@@ -709,6 +679,18 @@ components:
       - recommendations_api_enabled
       - usage
       - settings
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
     HealthResponse:
       type: object
       properties:
@@ -729,6 +711,13 @@ components:
       - status
       - version
       - time
+    MeSettingsResponse:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/AccountSettings'
+      required:
+      - settings
     OpenApiDocument:
       type: object
       properties:
@@ -1079,6 +1068,37 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
     SignupVerifiedResponse:
       type: object
       properties:
@@ -1117,128 +1137,108 @@ components:
       - rows_allotted
       - next
       - docs_url
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
-      required:
-      - quarters
-      - rows
-    TranscriptSettings:
-      type: object
-      properties:
-        quality:
-          type: string
-          enum:
-          - captions
-          - premium
-          description: 'Default transcript quality. Platform default: captions.'
-        language:
-          type: string
-          description: 'Default comma-separated caption language priority list, tried in order. Platform default: en.'
-        timestamps:
-          type: boolean
-          description: 'Default for the timestamps parameter. Platform default: true, which returns lines[].'
-      required:
-      - quality
-      - language
-      - timestamps
-      description: What a transcript request that names no parameter of its own receives.
-    RefusedQuote:
-      allOf:
-      - $ref: '#/components/schemas/TranscriptQuote'
-      - type: object
-        properties:
-          charge:
-            type: object
-            properties:
-              unit:
-                type: string
-                enum:
-                - rows
-                - credits
-              amount:
-                type: number
-              from:
-                type: string
-                enum:
-                - included
-                - on_demand
-                - mixed
-                description: Where the charge would come from at the current balance.
-            required:
-            - unit
-            - amount
-            - from
-            description: What the purchase would charge at the current balance. Absent when no current price could be read.
-          max_on_demand_cents:
-            type: integer
-            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
-      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
-    AccountSettings:
-      type: object
-      properties:
-        transcripts:
-          $ref: '#/components/schemas/TranscriptSettings'
-      required:
-      - transcripts
-      description: Account defaults every key of this account resolves against. Set them with PATCH /v1/me/settings.
-    SignupSentResponse:
-      type: object
-      properties:
-        next:
-          type: object
-          properties:
-            method:
-              type: string
-              enum:
-              - POST
-              description: Always POST.
-            url:
-              type: string
-              description: 'The verify call, absolute: POST it with { email, code } once the code arrives.'
-          required:
-          - method
-          - url
-          description: The call that completes the signup.
-        expires_in:
-          type: integer
-          description: Seconds the code stays valid, from the moment it was sent.
-      required:
-      - next
-      - expires_in
   headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    RateLimit-Remaining:
-      description: Requests left in the current window.
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
       schema:
         type: integer
     RateLimit-Reset:
       description: Unix time in seconds when the current window ends.
       schema:
         type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
     Retry-After:
       description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
       schema:
         type: integer
     X-Request-Id:
       description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
       schema:
         type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+  responses:
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

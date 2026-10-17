@@ -123,24 +123,6 @@ common:
   url: https://api.arcmira.com/v1/openapi.json
 
 apis:
-- name: YouTube Transcript Search API by Arcmira
-  description: Search indexed YouTube and podcast transcripts for timestamped passages, speaker appearances, mentions,
-    sponsors and recommendations. OpenAPI 3.1, API version 1.0.0. Every paid read uses credits from the account's plan,
-    then its on-demand budget; details and rate limits are at https://arcmira.com/docs/usage-and-billing.
-  humanURL: https://arcmira.com/docs
-  baseURL: https://api.arcmira.com
-  properties:
-  - type: OpenAPI
-    name: OpenAPI (provider-hosted)
-    url: https://api.arcmira.com/v1/openapi.json
-  - type: Documentation
-    url: https://arcmira.com/docs
-  - type: MCPServer
-    url: mcp/arcmira-mcp.yml
-  - type: Documentation
-    name: Usage and billing
-    url: https://arcmira.com/docs/usage-and-billing
-  aid: arcmira:arcmira-api
 - aid: arcmira:arcmira-channels-api
   name: Arcmira Channels API
   description: The Channels API from Arcmira — 2 operation(s) for channels.

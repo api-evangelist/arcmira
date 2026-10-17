@@ -383,6 +383,34 @@ components:
       - channel
       - sponsors
       - meta
+    EntityRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Public entity id in the form "ent_{n}".
+        name:
+          type: string
+          description: Canonical entity name.
+        type:
+          type: string
+          description: 'Entity type. Values: person (an individual), organization (a company or institution; legacy rows may read company or brand), product (a product or service), topic (a subject or theme), channel (a media source such as a YouTube channel), unknown (type was never classified).'
+        slug:
+          type:
+          - string
+          - 'null'
+          description: URL slug, the site's canonical id for every type but channel. Null when never slugged.
+        page:
+          type:
+          - string
+          - 'null'
+          description: The entity's page on arcmira.com, absolute. Link the name to it when you write the entity into an answer. Null for a type the site has no page for.
+      required:
+      - id
+      - name
+      - type
+      - slug
+      - page
     ErrorResource:
       oneOf:
       - type: object
@@ -558,34 +586,162 @@ components:
         required:
         - kind
       description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    EntityRef:
+    PublicationWindow:
+      type: object
+      properties:
+        after:
+          type:
+          - string
+          - 'null'
+          description: Inclusive start as an ISO instant. Null when the window has no start.
+        before:
+          type:
+          - string
+          - 'null'
+          description: Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window.
+      required:
+      - after
+      - before
+      description: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
+    Recommendation:
       type: object
       properties:
         id:
           type: string
-          description: Public entity id in the form "ent_{n}".
-        name:
+          description: Public recommendation id in the form "com_{n}".
+        class:
           type: string
-          description: Canonical entity name.
-        type:
-          type: string
-          description: 'Entity type. Values: person (an individual), organization (a company or institution; legacy rows may read company or brand), product (a product or service), topic (a subject or theme), channel (a media source such as a YouTube channel), unknown (type was never classified).'
-        slug:
+          enum:
+          - sponsored
+          - organic
+          - mention
+          description: 'Commercial class. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
+        entity:
+          $ref: '#/components/schemas/EntityRef'
+        media:
+          type: object
+          properties:
+            video_id:
+              type: string
+              description: YouTube video id (11 characters).
+            title:
+              type:
+              - string
+              - 'null'
+              description: Video title.
+            published_at:
+              type:
+              - string
+              - 'null'
+              description: Video publish timestamp.
+            channel_id:
+              type:
+              - string
+              - 'null'
+              description: YouTube channel id of the source channel.
+            source_channel:
+              type:
+              - object
+              - 'null'
+              properties:
+                id:
+                  type: string
+                  description: Public entity id ("ent_{n}") of the source channel.
+                name:
+                  type:
+                  - string
+                  - 'null'
+                  description: Source channel name.
+              required:
+              - id
+              - name
+              description: The channel entity that published the video. Null when the video has not been linked to a channel entity.
+          required:
+          - video_id
+          - title
+          - published_at
+          - channel_id
+          - source_channel
+        start_seconds:
+          type:
+          - integer
+          - 'null'
+          description: Start position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
+        end_seconds:
+          type:
+          - integer
+          - 'null'
+          description: End position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
+        verbatim_quote:
           type:
           - string
           - 'null'
-          description: URL slug, the site's canonical id for every type but channel. Null when never slugged.
-        page:
+          description: Verbatim quote from the transcript. Null when no quote was extracted.
+        promo_code:
           type:
           - string
           - 'null'
-          description: The entity's page on arcmira.com, absolute. Link the name to it when you write the entity into an answer. Null for a type the site has no page for.
+          description: Promo code read out in the mention. Null unless one was detected.
+        offer:
+          type:
+          - string
+          - 'null'
+          description: Offer text, e.g. "20% off your first order". Null unless one was detected.
+        sentiment:
+          type:
+          - number
+          - 'null'
+          deprecated: true
+          description: 'DEPRECATED: use sentiment_score, which carries the same number. Removal will be announced in the changelog. Raw NUMERIC sentiment score between -1 and 1. Null when not computed.'
+        sentiment_score:
+          type:
+          - number
+          - 'null'
+          description: Raw sentiment score between -1 and 1, same semantics as sentiment_score on mention rows. Null when not computed.
+        confidence:
+          type: number
+          description: Classifier confidence between 0 and 1. Rows below the min_confidence filter (default 0.7) are excluded from list responses.
+        speaker_role:
+          type: string
+          description: Role of the speaker delivering the mention, e.g. "host" or "guest".
+        conflict_status:
+          type:
+          - string
+          - 'null'
+          description: Set when community feedback disputes the classification (e.g. "disputed"). Null when undisputed. Disputed rows are excluded unless include_disputed=true.
+        resolution:
+          type:
+          - string
+          - 'null'
+          description: How a disputed classification was resolved. Null until a dispute has been resolved.
       required:
       - id
-      - name
-      - type
-      - slug
-      - page
+      - class
+      - entity
+      - media
+      - start_seconds
+      - end_seconds
+      - verbatim_quote
+      - promo_code
+      - offer
+      - sentiment
+      - sentiment_score
+      - confidence
+      - speaker_role
+      - conflict_status
+      - resolution
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
     ChannelSponsor:
       type: object
       properties:
@@ -739,6 +895,34 @@ components:
       - page
       - appearances_page
       - mentions_page
+    RecommendationListResponse:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+          description: Newest first.
+        has_more:
+          type: boolean
+          description: True when more rows exist past this page.
+        next_cursor:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. Null on the last page.
+        entity:
+          allOf:
+          - $ref: '#/components/schemas/Entity'
+          - description: The resolved entity the recommendations belong to.
+        window:
+          $ref: '#/components/schemas/PublicationWindow'
+      required:
+      - recommendations
+      - has_more
+      - next_cursor
+      - entity
+      - window
     Error:
       type: object
       properties:
@@ -1026,145 +1210,6 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
-    Recommendation:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Public recommendation id in the form "com_{n}".
-        class:
-          type: string
-          enum:
-          - sponsored
-          - organic
-          - mention
-          description: 'Commercial class. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
-        entity:
-          $ref: '#/components/schemas/EntityRef'
-        media:
-          type: object
-          properties:
-            video_id:
-              type: string
-              description: YouTube video id (11 characters).
-            title:
-              type:
-              - string
-              - 'null'
-              description: Video title.
-            published_at:
-              type:
-              - string
-              - 'null'
-              description: Video publish timestamp.
-            channel_id:
-              type:
-              - string
-              - 'null'
-              description: YouTube channel id of the source channel.
-            source_channel:
-              type:
-              - object
-              - 'null'
-              properties:
-                id:
-                  type: string
-                  description: Public entity id ("ent_{n}") of the source channel.
-                name:
-                  type:
-                  - string
-                  - 'null'
-                  description: Source channel name.
-              required:
-              - id
-              - name
-              description: The channel entity that published the video. Null when the video has not been linked to a channel entity.
-          required:
-          - video_id
-          - title
-          - published_at
-          - channel_id
-          - source_channel
-        start_seconds:
-          type:
-          - integer
-          - 'null'
-          description: Start position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
-        end_seconds:
-          type:
-          - integer
-          - 'null'
-          description: End position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
-        verbatim_quote:
-          type:
-          - string
-          - 'null'
-          description: Verbatim quote from the transcript. Null when no quote was extracted.
-        promo_code:
-          type:
-          - string
-          - 'null'
-          description: Promo code read out in the mention. Null unless one was detected.
-        offer:
-          type:
-          - string
-          - 'null'
-          description: Offer text, e.g. "20% off your first order". Null unless one was detected.
-        sentiment:
-          type:
-          - number
-          - 'null'
-          deprecated: true
-          description: 'DEPRECATED: use sentiment_score, which carries the same number. Removal will be announced in the changelog. Raw NUMERIC sentiment score between -1 and 1. Null when not computed.'
-        sentiment_score:
-          type:
-          - number
-          - 'null'
-          description: Raw sentiment score between -1 and 1, same semantics as sentiment_score on mention rows. Null when not computed.
-        confidence:
-          type: number
-          description: Classifier confidence between 0 and 1. Rows below the min_confidence filter (default 0.7) are excluded from list responses.
-        speaker_role:
-          type: string
-          description: Role of the speaker delivering the mention, e.g. "host" or "guest".
-        conflict_status:
-          type:
-          - string
-          - 'null'
-          description: Set when community feedback disputes the classification (e.g. "disputed"). Null when undisputed. Disputed rows are excluded unless include_disputed=true.
-        resolution:
-          type:
-          - string
-          - 'null'
-          description: How a disputed classification was resolved. Null until a dispute has been resolved.
-      required:
-      - id
-      - class
-      - entity
-      - media
-      - start_seconds
-      - end_seconds
-      - verbatim_quote
-      - promo_code
-      - offer
-      - sentiment
-      - sentiment_score
-      - confidence
-      - speaker_role
-      - conflict_status
-      - resolution
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
-      required:
-      - quarters
-      - rows
     RefusedQuote:
       allOf:
       - $ref: '#/components/schemas/TranscriptQuote'
@@ -1196,52 +1241,56 @@ components:
             type: integer
             description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
       description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
-    PublicationWindow:
-      type: object
-      properties:
-        after:
-          type:
-          - string
-          - 'null'
-          description: Inclusive start as an ISO instant. Null when the window has no start.
-        before:
-          type:
-          - string
-          - 'null'
-          description: Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window.
-      required:
-      - after
-      - before
-      description: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
-    RecommendationListResponse:
-      type: object
-      properties:
-        recommendations:
-          type: array
-          items:
-            $ref: '#/components/schemas/Recommendation'
-          description: Newest first.
-        has_more:
-          type: boolean
-          description: True when more rows exist past this page.
-        next_cursor:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. Null on the last page.
-        entity:
-          allOf:
-          - $ref: '#/components/schemas/Entity'
-          - description: The resolved entity the recommendations belong to.
-        window:
-          $ref: '#/components/schemas/PublicationWindow'
-      required:
-      - recommendations
-      - has_more
-      - next_cursor
-      - entity
-      - window
+  headers:
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
   responses:
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     RateLimited:
       description: Rate limit exceeded. Retry-After carries the wait.
       headers:
@@ -1261,8 +1310,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Not found
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
@@ -1294,66 +1354,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    AuthenticationError:
-      description: Authentication error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-  headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    RateLimit-Remaining:
-      description: Requests left in the current window.
-      schema:
-        type: integer
-    RateLimit-Reset:
-      description: Unix time in seconds when the current window ends.
-      schema:
-        type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
-    Retry-After:
-      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
-      schema:
-        type: integer
-    X-Request-Id:
-      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
-      schema:
-        type: string
   securitySchemes:
     bearerAuth:
       type: http

@@ -774,82 +774,268 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
-  responses:
-    RateLimited:
-      description: Rate limit exceeded. Retry-After carries the wait.
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-        RateLimit-Limit:
-          $ref: '#/components/headers/RateLimit-Limit'
-        RateLimit-Remaining:
-          $ref: '#/components/headers/RateLimit-Remaining'
-        RateLimit-Reset:
-          $ref: '#/components/headers/RateLimit-Reset'
-        Retry-After:
-          $ref: '#/components/headers/Retry-After'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Not found
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InvalidRequest:
-      description: Invalid request
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    AuthenticationError:
-      description: Authentication error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+  headers:
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    Idempotency-Replayed:
+      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
+      schema:
+        type: string
+        enum:
+        - 'true'
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
   schemas:
+    MonitorListResponse:
+      type: object
+      properties:
+        monitors:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/Monitor'
+            - type: object
+              properties:
+                tracker_count:
+                  type: integer
+                  description: Number of trackers in the monitor.
+                alerts_this_month:
+                  type: integer
+                  description: Alert deliveries written for this monitor since the start of the calendar month.
+                slack_integration:
+                  type:
+                  - object
+                  - 'null'
+                  properties:
+                    id:
+                      type: string
+                      description: Slack integration id.
+                    team_name:
+                      type:
+                      - string
+                      - 'null'
+                      description: Slack workspace name.
+                    channel_name:
+                      type:
+                      - string
+                      - 'null'
+                      description: Slack channel the integration posts to.
+                  required:
+                  - id
+                  - team_name
+                  - channel_name
+                  description: Display metadata for the connected Slack integration. Null/absent when Slack is not configured.
+              required:
+              - tracker_count
+              - alerts_this_month
+          description: The account's personal monitors and the monitors of every team it belongs to, ordered by dashboard sort position, then name.
+      required:
+      - monitors
+    MonitorEntityResult:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          description: The entity id as requested. Present on an entity_ids result.
+        name:
+          type: string
+          description: The name as requested. Present on a names result.
+        type:
+          type: string
+          enum:
+          - person
+          - organization
+          - product
+          - topic
+          - channel
+          description: The type as requested, org read as organization. Present on a names result.
+        canonical_entity_id:
+          type: string
+          description: 'Present when entity_id was merged: the canonical entity the tracker follows.'
+        tracker_id:
+          type:
+          - string
+          - 'null'
+          description: 'The tracker that follows the entity: an existing one when the account already tracked it, else the one this request created. Null when no tracker could be used (see reason).'
+        created:
+          type: boolean
+          description: true when this request created the tracker.
+        attached:
+          type: boolean
+          description: true when the tracker is in this monitor after the request, including when it already was.
+        reason:
+          type: string
+          enum:
+          - entity_not_found
+          - entity_type_not_trackable
+          - tracker_limit_reached
+          - tracked_in_another_monitor
+          description: 'Why attached is false. Values: entity_not_found (no entity has this id), entity_type_not_trackable (only person, organization, product, topic and channel entities can be tracked), tracker_limit_reached (the plan allows no more trackers; upgrade the plan for more), tracked_in_another_monitor (the account already follows this entity in current_monitor_id; it was left there, so move it with POST /v1/monitors/{id}/trackers if the user wants). A names result can only carry tracker_limit_reached or tracked_in_another_monitor.'
+        current_monitor_id:
+          type: string
+          description: 'With reason tracked_in_another_monitor: the monitor the tracker is in.'
+      required:
+      - tracker_id
+      - created
+      - attached
+    MonitorAddEntitiesResponse:
+      type: object
+      properties:
+        monitor_id:
+          type: string
+          description: The monitor the entities were added to.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitorEntityResult'
+          description: One result per distinct requested entity id, then one per distinct requested name, each in request order.
+      required:
+      - monitor_id
+      - results
+    MonitorAddTrackersResponse:
+      type: object
+      properties:
+        attached_count:
+          type: integer
+          description: Number of unique requested trackers attached.
+        message:
+          type: string
+          description: Human-readable confirmation, e.g. "Added 3 tracker(s) to monitor".
+        monitor_id:
+          type: string
+          description: The monitor id from the request path.
+      required:
+      - attached_count
+      - message
+      - monitor_id
+    MonitorTrackersResponse:
+      type: object
+      properties:
+        trackers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Tracker id.
+              entity_name:
+                type: string
+                description: Tracked entity name.
+              entity_type:
+                type: string
+                description: Tracked entity type.
+              display_name:
+                type: string
+                description: User-facing display name. Falls back to entity_name when not customized.
+              paused:
+                type: boolean
+                description: True when the tracker is paused.
+              paused_at:
+                type:
+                - string
+                - 'null'
+                description: When the tracker was paused. Null unless paused.
+              last_notified_at:
+                type:
+                - string
+                - 'null'
+                description: When the tracker last produced an alert. Null until the first alert.
+              created_at:
+                type: string
+                description: When the tracker was created.
+              updated_at:
+                type:
+                - string
+                - 'null'
+                description: When the tracker was last updated.
+              monitor_id:
+                type: string
+                description: The monitor id from the request path.
+            required:
+            - id
+            - entity_name
+            - entity_type
+            - display_name
+            - paused
+            - paused_at
+            - last_notified_at
+            - created_at
+            - updated_at
+            - monitor_id
+          description: Trackers in the monitor, newest first.
+        count:
+          type: integer
+          description: Number of trackers returned.
+      required:
+      - trackers
+      - count
+    SlackIntegrationListResponse:
+      type: object
+      properties:
+        integrations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: 'Slack integration id. Pass it as slack_integration_id when creating or updating a monitor with notify_slack: true.'
+              team_name:
+                type: string
+                description: The Slack workspace name.
+              default_channel_id:
+                type:
+                - string
+                - 'null'
+                description: The channel the workspace install chose. A monitor with notify_slack and no slack_channel_id delivers here. Null when the install chose none; then pass slack_channel_id.
+              channels:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Slack channel id.
+                    name:
+                      type:
+                      - string
+                      - 'null'
+                      description: 'Channel name as stored at install time, without the #. Null when not stored.'
+                  required:
+                  - id
+                  - name
+                description: 'The channels Arcmira has stored for this workspace: today the install channel only. Arcmira does not list the workspace live.'
+            required:
+            - id
+            - team_name
+            - default_channel_id
+            - channels
+          description: 'Active Slack workspaces connected to the account, ordered by workspace name. Empty when none is connected: connect one in the dashboard first.'
+      required:
+      - integrations
     ErrorResource:
       oneOf:
       - type: object
@@ -1025,222 +1211,173 @@ components:
         required:
         - kind
       description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    AlertListResponse:
+    WebhookSecretRotateResponse:
       type: object
       properties:
-        alerts:
-          type: array
-          items:
-            $ref: '#/components/schemas/Alert'
-          description: Newest alerts first.
-        has_more:
-          type: boolean
-          description: 'True when older alerts exist past limit. The endpoint does not paginate: raise limit, up to 100, to read them.'
-        next_cursor:
-          type: 'null'
-          description: 'Always null: this endpoint does not paginate.'
-      required:
-      - alerts
-      - has_more
-      - next_cursor
-    MonitorMutationResponse:
-      type: object
-      properties:
-        monitor:
-          allOf:
-          - $ref: '#/components/schemas/Monitor'
-          - type: object
-            properties:
-              tracker_count:
-                type: integer
-                description: Number of trackers in the monitor. Always 0 in the create response.
-              webhook_secret:
-                type: string
-                description: 'The webhook signing secret ("whsec_..."). Only present when this request NEWLY enabled webhook signing: a create with notify_webhook: true and a webhook_url, or a PATCH that turns the webhook on (or sets a URL) where no secret existed before. Store it securely. The same Idempotency-Key can recover it for up to 24 hours while it remains the current or valid previous secret. A displaced or expired secret returns idempotency_result_expired without rotating again.'
-            required:
-            - tracker_count
-        message:
+        webhook_secret:
           type: string
-          description: Human-readable confirmation.
+          description: The NEW webhook signing secret ("whsec_..."). Store it securely. The same Idempotency-Key can recover it for up to 24 hours while it remains the current or valid previous secret. A displaced or expired secret returns idempotency_result_expired without rotating again.
+        webhook_secret_hint:
+          type: string
+          description: Last 4 characters of the new secret, for identifying which secret you hold.
+        previous_secret_expires_at:
+          type:
+          - string
+          - 'null'
+          description: End of the 24-hour overlap window. Until then, deliveries carry an additional X-Arcmira-Signature-Previous header computed with the previous secret over the same {timestamp}.{payload} string, so you can verify with either secret while you roll. Null when the monitor had no previous secret (nothing to overlap).
       required:
-      - monitor
-      - message
-    MonitorAddEntitiesResponse:
+      - webhook_secret
+      - webhook_secret_hint
+      - previous_secret_expires_at
+    TranscriptQuote:
       type: object
       properties:
-        monitor_id:
-          type: string
-          description: The monitor the entities were added to.
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/MonitorEntityResult'
-          description: One result per distinct requested entity id, then one per distinct requested name, each in request order.
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
       required:
-      - monitor_id
-      - results
-    Monitor:
+      - quarters
+      - rows
+    Alert:
       type: object
       properties:
         id:
           type: string
-          description: Monitor id.
-        name:
+          description: Alert delivery id.
+        tracker_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the tracker (tracked entity) that produced the alert.
+        monitor_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the monitor the tracker belongs to. Null for trackers outside a monitor.
+        entity_id:
+          type:
+          - string
+          - 'null'
+          description: Public id ("ent_{n}") of the entity that triggered the alert, when recorded. Null on older rows that were written before entity_id was stored on alert_delivery. Resolve the entity through mention_id or the embedded tracker when this is null.
+        mention_id:
+          type:
+          - string
+          - 'null'
+          description: Public id ("men_{n}") of the mention/appearance row that triggered the alert. Joins directly against mention rows (e.g. /v1/mentions). Null when not appearance-scoped.
+        video_id:
+          type:
+          - string
+          - 'null'
+          description: YouTube video id (11 characters) of the video that triggered the alert. Null when not media-scoped.
+        excerpt_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the active mention excerpt used as mention evidence. Null when the alert was sent before evidence was recorded.
+        evidence_kind:
+          type:
+          - string
+          - 'null'
+          enum:
+          - excerpt
+          - null
+          description: Which evidence layer was sent. Null on older rows.
+        channel:
           type: string
-          description: Monitor name.
-        paused:
-          type: boolean
-          description: 'True when delivery is paused for all trackers in this monitor. New alerts are not queued, and queued email delivery checks the pause state again before sending. Use PATCH /v1/trackers/{id} with paused: true to pause one tracker.'
-        notify_emails:
-          type: array
-          items:
-            type: string
-          description: Configured email recipients. External recipients must confirm before delivery. Free includes one additional recipient per monitor.
-        email_recipients:
-          type: array
-          items:
-            type: object
-            properties:
-              email:
-                type: string
-              role:
-                type: string
-                enum:
-                - owner
-                - member
-                - external
-                description: 'owner: the paying account. member: a member of the monitor''s team, who receives its alerts without an invitation and does not count toward the recipient limits. external: anyone else, who must confirm first.'
-              user_id:
-                type:
-                - string
-                - 'null'
-                description: The Arcmira user behind an owner or member address. Null for external recipients.
-              status:
-                type: string
-                enum:
-                - active
-                - pending
-                - unsubscribed
-                - suppressed
-                - removed
-                - owner_unverified
-                - plan_limited
-                - muted
-                description: 'muted: a team member muted this monitor for themselves.'
-              invitation_status:
-                type: string
-                enum:
-                - sent
-                - failed
-                - limited
-                - pending
-            required:
-            - email
-            - role
-            - user_id
-            - status
-          description: Every address the monitor reaches, with consent and invitation state. An account is not required to accept.
-        notify_frequency:
+          description: 'Delivery channel. Values: email (sent by email), webhook (POSTed to the configured webhook URL), slack (sent to Slack).'
+        status:
           type: string
-          default: realtime
-          description: 'Delivery cadence. Values: realtime (deliver immediately), hourly (hourly digest), daily (daily digest).'
-        digest_day:
-          type: string
-          default: monday
-          description: Day of week for digest delivery.
-        digest_time:
-          type: string
-          default: 09:00
-          description: Time of day (HH:MM) for digest delivery.
-        notify_webhook:
-          type: boolean
-          description: True when webhook delivery is enabled.
-        webhook_url:
+          description: 'Delivery status. Values: pending (queued for delivery), sent (delivered), failed (delivery failed; see error_message), skipped (delivery intentionally skipped).'
+        final_status:
           type:
           - string
           - 'null'
-          description: 'Webhook destination URL. Null when no webhook is configured. Absent when access is member: only the team owner sees the webhook.'
-        webhook_secret_set:
-          type: boolean
-          description: True when a webhook signing secret exists for this monitor. The secret itself is never returned on reads; enablement and rotation responses support recovery with the original Idempotency-Key during the valid recovery window. Absent when access is member.
-        webhook_secret_hint:
+          description: Terminal status after retries. Null while delivery is still in progress.
+        error_message:
           type:
           - string
           - 'null'
-          description: Last 4 characters of the current signing secret, for identifying which secret you hold. Null until a secret exists. Absent when access is member.
-        webhook_failures:
-          type: integer
-          default: 0
-          description: 'Consecutive webhook delivery failures recorded for this monitor. Reset by a secret rotation or PATCHing notify_webhook: true; 10 consecutive failures auto-disable a webhook. Note: the delivery pipeline currently accrues failures on the tracker that fired, so this monitor-level counter can lag.'
-        webhook_disabled_at:
+          description: Error details for failed deliveries. Null unless delivery failed.
+        scheduled_at:
           type:
           - string
           - 'null'
-          description: 'When the webhook was auto-disabled after repeated failures. Null while delivery is enabled. Re-enable by PATCHing notify_webhook: true; rotation alone never re-enables.'
-        webhook_disabled_reason:
+          description: When delivery was scheduled. Null when delivered immediately.
+        sent_at:
           type:
           - string
           - 'null'
-          description: Why the webhook was auto-disabled. Null while delivery is enabled.
-        notify_slack:
-          type: boolean
-          description: True when Slack delivery is enabled.
-        slack_integration_id:
-          type:
-          - string
-          - 'null'
-          description: Slack integration used for delivery. Null when Slack is not configured.
-        slack_channel_id:
-          type:
-          - string
-          - 'null'
-          description: Slack channel to deliver to. Null when Slack is not configured.
+          description: When the alert was actually sent. Null until delivery succeeds.
         created_at:
           type: string
-          description: When the monitor was created.
-        updated_at:
-          type: string
-          description: When the monitor was last updated.
-        team:
+          description: When the alert row was created.
+        tracker:
+          type: object
+          properties:
+            id:
+              type:
+              - string
+              - 'null'
+              description: Tracker id.
+            entity_name:
+              type:
+              - string
+              - 'null'
+              description: Tracked entity name.
+            entity_type:
+              type:
+              - string
+              - 'null'
+              description: Tracked entity type.
+            display_name:
+              type:
+              - string
+              - 'null'
+              description: User-facing display name for the tracker. Null when not customized.
+          required:
+          - id
+          - entity_name
+          - entity_type
+          - display_name
+          description: The tracker the alert belongs to. Fields are null when the tracker row was deleted.
+        monitor:
           type:
           - object
           - 'null'
           properties:
             id:
               type: string
-              description: Team id.
+              description: Monitor id.
             name:
-              type: string
-              description: Team name.
+              type:
+              - string
+              - 'null'
+              description: Monitor name.
           required:
           - id
           - name
-          description: The team the monitor is shared with. Null for a personal monitor.
-        access:
-          type: string
-          enum:
-          - account
-          - member
-          description: 'account: the caller pays for the monitor, as its personal owner or the team owner. member: the caller is another member of its team, who may edit it but not its webhook, and may not delete it.'
-        muted:
-          type: boolean
-          description: True when the caller muted this team monitor for themselves. Always false on a personal monitor.
+          description: The monitor the tracker belongs to. Null for trackers outside a monitor.
       required:
       - id
-      - name
-      - paused
-      - notify_emails
-      - notify_webhook
-      - webhook_disabled_at
-      - webhook_disabled_reason
-      - notify_slack
-      - slack_integration_id
-      - slack_channel_id
+      - tracker_id
+      - monitor_id
+      - entity_id
+      - mention_id
+      - video_id
+      - excerpt_id
+      - evidence_kind
+      - channel
+      - status
+      - final_status
+      - error_message
+      - scheduled_at
+      - sent_at
       - created_at
-      - updated_at
-      - team
-      - access
-      - muted
+      - tracker
+      - monitor
     Error:
       type: object
       properties:
@@ -1528,169 +1665,186 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
-    SlackIntegrationListResponse:
+    AlertListResponse:
       type: object
       properties:
-        integrations:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+          description: Newest alerts first.
+        has_more:
+          type: boolean
+          description: 'True when older alerts exist past limit. The endpoint does not paginate: raise limit, up to 100, to read them.'
+        next_cursor:
+          type: 'null'
+          description: 'Always null: this endpoint does not paginate.'
+      required:
+      - alerts
+      - has_more
+      - next_cursor
+    Monitor:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Monitor id.
+        name:
+          type: string
+          description: Monitor name.
+        paused:
+          type: boolean
+          description: 'True when delivery is paused for all trackers in this monitor. New alerts are not queued, and queued email delivery checks the pause state again before sending. Use PATCH /v1/trackers/{id} with paused: true to pause one tracker.'
+        notify_emails:
+          type: array
+          items:
+            type: string
+          description: Configured email recipients. External recipients must confirm before delivery. Free includes one additional recipient per monitor.
+        email_recipients:
           type: array
           items:
             type: object
             properties:
-              id:
+              email:
                 type: string
-                description: 'Slack integration id. Pass it as slack_integration_id when creating or updating a monitor with notify_slack: true.'
-              team_name:
+              role:
                 type: string
-                description: The Slack workspace name.
-              default_channel_id:
+                enum:
+                - owner
+                - member
+                - external
+                description: 'owner: the paying account. member: a member of the monitor''s team, who receives its alerts without an invitation and does not count toward the recipient limits. external: anyone else, who must confirm first.'
+              user_id:
                 type:
                 - string
                 - 'null'
-                description: The channel the workspace install chose. A monitor with notify_slack and no slack_channel_id delivers here. Null when the install chose none; then pass slack_channel_id.
-              channels:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      description: Slack channel id.
-                    name:
-                      type:
-                      - string
-                      - 'null'
-                      description: 'Channel name as stored at install time, without the #. Null when not stored.'
-                  required:
-                  - id
-                  - name
-                description: 'The channels Arcmira has stored for this workspace: today the install channel only. Arcmira does not list the workspace live.'
+                description: The Arcmira user behind an owner or member address. Null for external recipients.
+              status:
+                type: string
+                enum:
+                - active
+                - pending
+                - unsubscribed
+                - suppressed
+                - removed
+                - owner_unverified
+                - plan_limited
+                - muted
+                description: 'muted: a team member muted this monitor for themselves.'
+              invitation_status:
+                type: string
+                enum:
+                - sent
+                - failed
+                - limited
+                - pending
             required:
-            - id
-            - team_name
-            - default_channel_id
-            - channels
-          description: 'Active Slack workspaces connected to the account, ordered by workspace name. Empty when none is connected: connect one in the dashboard first.'
-      required:
-      - integrations
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
+            - email
+            - role
+            - user_id
+            - status
+          description: Every address the monitor reaches, with consent and invitation state. An account is not required to accept.
+        notify_frequency:
+          type: string
+          default: realtime
+          description: 'Delivery cadence. Values: realtime (deliver immediately), hourly (hourly digest), daily (daily digest).'
+        digest_day:
+          type: string
+          default: monday
+          description: Day of week for digest delivery.
+        digest_time:
+          type: string
+          default: 09:00
+          description: Time of day (HH:MM) for digest delivery.
+        notify_webhook:
+          type: boolean
+          description: True when webhook delivery is enabled.
+        webhook_url:
+          type:
+          - string
+          - 'null'
+          description: 'Webhook destination URL. Null when no webhook is configured. Absent when access is member: only the team owner sees the webhook.'
+        webhook_secret_set:
+          type: boolean
+          description: True when a webhook signing secret exists for this monitor. The secret itself is never returned on reads; enablement and rotation responses support recovery with the original Idempotency-Key during the valid recovery window. Absent when access is member.
+        webhook_secret_hint:
+          type:
+          - string
+          - 'null'
+          description: Last 4 characters of the current signing secret, for identifying which secret you hold. Null until a secret exists. Absent when access is member.
+        webhook_failures:
           type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+          default: 0
+          description: 'Consecutive webhook delivery failures recorded for this monitor. Reset by a secret rotation or PATCHing notify_webhook: true; 10 consecutive failures auto-disable a webhook. Note: the delivery pipeline currently accrues failures on the tracker that fired, so this monitor-level counter can lag.'
+        webhook_disabled_at:
+          type:
+          - string
+          - 'null'
+          description: 'When the webhook was auto-disabled after repeated failures. Null while delivery is enabled. Re-enable by PATCHing notify_webhook: true; rotation alone never re-enables.'
+        webhook_disabled_reason:
+          type:
+          - string
+          - 'null'
+          description: Why the webhook was auto-disabled. Null while delivery is enabled.
+        notify_slack:
+          type: boolean
+          description: True when Slack delivery is enabled.
+        slack_integration_id:
+          type:
+          - string
+          - 'null'
+          description: Slack integration used for delivery. Null when Slack is not configured.
+        slack_channel_id:
+          type:
+          - string
+          - 'null'
+          description: Slack channel to deliver to. Null when Slack is not configured.
+        created_at:
+          type: string
+          description: When the monitor was created.
+        updated_at:
+          type: string
+          description: When the monitor was last updated.
+        team:
+          type:
+          - object
+          - 'null'
+          properties:
+            id:
+              type: string
+              description: Team id.
+            name:
+              type: string
+              description: Team name.
+          required:
+          - id
+          - name
+          description: The team the monitor is shared with. Null for a personal monitor.
+        access:
+          type: string
+          enum:
+          - account
+          - member
+          description: 'account: the caller pays for the monitor, as its personal owner or the team owner. member: the caller is another member of its team, who may edit it but not its webhook, and may not delete it.'
+        muted:
+          type: boolean
+          description: True when the caller muted this team monitor for themselves. Always false on a personal monitor.
       required:
-      - quarters
-      - rows
-    MonitorListResponse:
-      type: object
-      properties:
-        monitors:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/Monitor'
-            - type: object
-              properties:
-                tracker_count:
-                  type: integer
-                  description: Number of trackers in the monitor.
-                alerts_this_month:
-                  type: integer
-                  description: Alert deliveries written for this monitor since the start of the calendar month.
-                slack_integration:
-                  type:
-                  - object
-                  - 'null'
-                  properties:
-                    id:
-                      type: string
-                      description: Slack integration id.
-                    team_name:
-                      type:
-                      - string
-                      - 'null'
-                      description: Slack workspace name.
-                    channel_name:
-                      type:
-                      - string
-                      - 'null'
-                      description: Slack channel the integration posts to.
-                  required:
-                  - id
-                  - team_name
-                  - channel_name
-                  description: Display metadata for the connected Slack integration. Null/absent when Slack is not configured.
-              required:
-              - tracker_count
-              - alerts_this_month
-          description: The account's personal monitors and the monitors of every team it belongs to, ordered by dashboard sort position, then name.
-      required:
-      - monitors
-    MonitorTrackersResponse:
-      type: object
-      properties:
-        trackers:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                description: Tracker id.
-              entity_name:
-                type: string
-                description: Tracked entity name.
-              entity_type:
-                type: string
-                description: Tracked entity type.
-              display_name:
-                type: string
-                description: User-facing display name. Falls back to entity_name when not customized.
-              paused:
-                type: boolean
-                description: True when the tracker is paused.
-              paused_at:
-                type:
-                - string
-                - 'null'
-                description: When the tracker was paused. Null unless paused.
-              last_notified_at:
-                type:
-                - string
-                - 'null'
-                description: When the tracker last produced an alert. Null until the first alert.
-              created_at:
-                type: string
-                description: When the tracker was created.
-              updated_at:
-                type:
-                - string
-                - 'null'
-                description: When the tracker was last updated.
-              monitor_id:
-                type: string
-                description: The monitor id from the request path.
-            required:
-            - id
-            - entity_name
-            - entity_type
-            - display_name
-            - paused
-            - paused_at
-            - last_notified_at
-            - created_at
-            - updated_at
-            - monitor_id
-          description: Trackers in the monitor, newest first.
-        count:
-          type: integer
-          description: Number of trackers returned.
-      required:
-      - trackers
-      - count
+      - id
+      - name
+      - paused
+      - notify_emails
+      - notify_webhook
+      - webhook_disabled_at
+      - webhook_disabled_reason
+      - notify_slack
+      - slack_integration_id
+      - slack_channel_id
+      - created_at
+      - updated_at
+      - team
+      - access
+      - muted
     RefusedQuote:
       allOf:
       - $ref: '#/components/schemas/TranscriptQuote'
@@ -1722,224 +1876,28 @@ components:
             type: integer
             description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
       description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
-    MonitorEntityResult:
+    MonitorMutationResponse:
       type: object
       properties:
-        entity_id:
-          type: string
-          description: The entity id as requested. Present on an entity_ids result.
-        name:
-          type: string
-          description: The name as requested. Present on a names result.
-        type:
-          type: string
-          enum:
-          - person
-          - organization
-          - product
-          - topic
-          - channel
-          description: The type as requested, org read as organization. Present on a names result.
-        canonical_entity_id:
-          type: string
-          description: 'Present when entity_id was merged: the canonical entity the tracker follows.'
-        tracker_id:
-          type:
-          - string
-          - 'null'
-          description: 'The tracker that follows the entity: an existing one when the account already tracked it, else the one this request created. Null when no tracker could be used (see reason).'
-        created:
-          type: boolean
-          description: true when this request created the tracker.
-        attached:
-          type: boolean
-          description: true when the tracker is in this monitor after the request, including when it already was.
-        reason:
-          type: string
-          enum:
-          - entity_not_found
-          - entity_type_not_trackable
-          - tracker_limit_reached
-          - tracked_in_another_monitor
-          description: 'Why attached is false. Values: entity_not_found (no entity has this id), entity_type_not_trackable (only person, organization, product, topic and channel entities can be tracked), tracker_limit_reached (the plan allows no more trackers; upgrade the plan for more), tracked_in_another_monitor (the account already follows this entity in current_monitor_id; it was left there, so move it with POST /v1/monitors/{id}/trackers if the user wants). A names result can only carry tracker_limit_reached or tracked_in_another_monitor.'
-        current_monitor_id:
-          type: string
-          description: 'With reason tracked_in_another_monitor: the monitor the tracker is in.'
-      required:
-      - tracker_id
-      - created
-      - attached
-    Alert:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Alert delivery id.
-        tracker_id:
-          type:
-          - string
-          - 'null'
-          description: Id of the tracker (tracked entity) that produced the alert.
-        monitor_id:
-          type:
-          - string
-          - 'null'
-          description: Id of the monitor the tracker belongs to. Null for trackers outside a monitor.
-        entity_id:
-          type:
-          - string
-          - 'null'
-          description: Public id ("ent_{n}") of the entity that triggered the alert, when recorded. Null on older rows that were written before entity_id was stored on alert_delivery. Resolve the entity through mention_id or the embedded tracker when this is null.
-        mention_id:
-          type:
-          - string
-          - 'null'
-          description: Public id ("men_{n}") of the mention/appearance row that triggered the alert. Joins directly against mention rows (e.g. /v1/mentions). Null when not appearance-scoped.
-        video_id:
-          type:
-          - string
-          - 'null'
-          description: YouTube video id (11 characters) of the video that triggered the alert. Null when not media-scoped.
-        excerpt_id:
-          type:
-          - string
-          - 'null'
-          description: Id of the active mention excerpt used as mention evidence. Null when the alert was sent before evidence was recorded.
-        evidence_kind:
-          type:
-          - string
-          - 'null'
-          enum:
-          - excerpt
-          - null
-          description: Which evidence layer was sent. Null on older rows.
-        channel:
-          type: string
-          description: 'Delivery channel. Values: email (sent by email), webhook (POSTed to the configured webhook URL), slack (sent to Slack).'
-        status:
-          type: string
-          description: 'Delivery status. Values: pending (queued for delivery), sent (delivered), failed (delivery failed; see error_message), skipped (delivery intentionally skipped).'
-        final_status:
-          type:
-          - string
-          - 'null'
-          description: Terminal status after retries. Null while delivery is still in progress.
-        error_message:
-          type:
-          - string
-          - 'null'
-          description: Error details for failed deliveries. Null unless delivery failed.
-        scheduled_at:
-          type:
-          - string
-          - 'null'
-          description: When delivery was scheduled. Null when delivered immediately.
-        sent_at:
-          type:
-          - string
-          - 'null'
-          description: When the alert was actually sent. Null until delivery succeeds.
-        created_at:
-          type: string
-          description: When the alert row was created.
-        tracker:
-          type: object
-          properties:
-            id:
-              type:
-              - string
-              - 'null'
-              description: Tracker id.
-            entity_name:
-              type:
-              - string
-              - 'null'
-              description: Tracked entity name.
-            entity_type:
-              type:
-              - string
-              - 'null'
-              description: Tracked entity type.
-            display_name:
-              type:
-              - string
-              - 'null'
-              description: User-facing display name for the tracker. Null when not customized.
-          required:
-          - id
-          - entity_name
-          - entity_type
-          - display_name
-          description: The tracker the alert belongs to. Fields are null when the tracker row was deleted.
         monitor:
-          type:
-          - object
-          - 'null'
-          properties:
-            id:
-              type: string
-              description: Monitor id.
-            name:
-              type:
-              - string
-              - 'null'
-              description: Monitor name.
-          required:
-          - id
-          - name
-          description: The monitor the tracker belongs to. Null for trackers outside a monitor.
-      required:
-      - id
-      - tracker_id
-      - monitor_id
-      - entity_id
-      - mention_id
-      - video_id
-      - excerpt_id
-      - evidence_kind
-      - channel
-      - status
-      - final_status
-      - error_message
-      - scheduled_at
-      - sent_at
-      - created_at
-      - tracker
-      - monitor
-    WebhookSecretRotateResponse:
-      type: object
-      properties:
-        webhook_secret:
-          type: string
-          description: The NEW webhook signing secret ("whsec_..."). Store it securely. The same Idempotency-Key can recover it for up to 24 hours while it remains the current or valid previous secret. A displaced or expired secret returns idempotency_result_expired without rotating again.
-        webhook_secret_hint:
-          type: string
-          description: Last 4 characters of the new secret, for identifying which secret you hold.
-        previous_secret_expires_at:
-          type:
-          - string
-          - 'null'
-          description: End of the 24-hour overlap window. Until then, deliveries carry an additional X-Arcmira-Signature-Previous header computed with the previous secret over the same {timestamp}.{payload} string, so you can verify with either secret while you roll. Null when the monitor had no previous secret (nothing to overlap).
-      required:
-      - webhook_secret
-      - webhook_secret_hint
-      - previous_secret_expires_at
-    MonitorAddTrackersResponse:
-      type: object
-      properties:
-        attached_count:
-          type: integer
-          description: Number of unique requested trackers attached.
+          allOf:
+          - $ref: '#/components/schemas/Monitor'
+          - type: object
+            properties:
+              tracker_count:
+                type: integer
+                description: Number of trackers in the monitor. Always 0 in the create response.
+              webhook_secret:
+                type: string
+                description: 'The webhook signing secret ("whsec_..."). Only present when this request NEWLY enabled webhook signing: a create with notify_webhook: true and a webhook_url, or a PATCH that turns the webhook on (or sets a URL) where no secret existed before. Store it securely. The same Idempotency-Key can recover it for up to 24 hours while it remains the current or valid previous secret. A displaced or expired secret returns idempotency_result_expired without rotating again.'
+            required:
+            - tracker_count
         message:
           type: string
-          description: Human-readable confirmation, e.g. "Added 3 tracker(s) to monitor".
-        monitor_id:
-          type: string
-          description: The monitor id from the request path.
+          description: Human-readable confirmation.
       required:
-      - attached_count
+      - monitor
       - message
-      - monitor_id
     MonitorDeleteResponse:
       type: object
       properties:
@@ -1952,39 +1910,81 @@ components:
       required:
       - message
       - trackers_deleted
-  headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    Idempotency-Replayed:
-      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
-      schema:
-        type: string
-        enum:
-        - 'true'
-    RateLimit-Remaining:
-      description: Requests left in the current window.
-      schema:
-        type: integer
-    RateLimit-Reset:
-      description: Unix time in seconds when the current window ends.
-      schema:
-        type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
-    Retry-After:
-      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
-      schema:
-        type: integer
-    X-Request-Id:
-      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
-      schema:
-        type: string
+  responses:
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

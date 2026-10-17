@@ -248,296 +248,51 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
-  responses:
-    RateLimited:
-      description: Rate limit exceeded. Retry-After carries the wait.
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-        RateLimit-Limit:
-          $ref: '#/components/headers/RateLimit-Limit'
-        RateLimit-Remaining:
-          $ref: '#/components/headers/RateLimit-Remaining'
-        RateLimit-Reset:
-          $ref: '#/components/headers/RateLimit-Reset'
-        Retry-After:
-          $ref: '#/components/headers/Retry-After'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Not found
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InvalidRequest:
-      description: Invalid request
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    QuotaExceeded:
-      description: Quota exceeded
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    AuthenticationError:
-      description: Authentication error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    ErrorResource:
-      oneOf:
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - media_rows
-          beyond_row:
-            type: integer
-        required:
-        - kind
-        - beyond_row
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - fresh_media
-          window_days:
-            type: integer
-          cutoff:
-            type:
-            - string
-            - 'null'
-        required:
-        - kind
-        - window_days
-        - cutoff
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - sidebar_rows
-          section:
-            type: string
-            enum:
-            - topics
-            - entities
-          beyond_row:
-            type: integer
-        required:
-        - kind
-        - section
-        - beyond_row
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - counts
-        required:
-        - kind
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - chart
-        required:
-        - kind
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - pagination
-          param:
-            type:
-            - string
-            - 'null'
-            enum:
-            - offset
-            - cursor
-            - null
-        required:
-        - kind
-        - param
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - premium_transcript
-        required:
-        - kind
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - filter
-          param:
-            type: string
-        required:
-        - kind
-        - param
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - commercial
-          what:
-            type: string
-            enum:
-            - sponsors
-            - recommendations
-            - mention_details
-            - community_review
-            - paid_split
-        required:
-        - kind
-        - what
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - feature
-          feature:
-            type: string
-            enum:
-            - api
-            - export
-        required:
-        - kind
-        - feature
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - rows
-          requested:
-            type:
-            - integer
-            - 'null'
-          remaining:
-            type:
-            - integer
-            - 'null'
-        required:
-        - kind
-        - requested
-        - remaining
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - key
-          scope:
-            type:
-            - string
-            - 'null'
-            enum:
-            - read
-            - monitors:write
-            - trackers:write
-            - recommendations:read
-            - null
-        required:
-        - kind
-        - scope
-      - type: object
-        properties:
-          kind:
-            type: string
-            enum:
-            - requests
-        required:
-        - kind
-      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    EntityRef:
+    MentionListResponse:
       type: object
       properties:
-        id:
-          type: string
-          description: Public entity id in the form "ent_{n}".
-        name:
-          type: string
-          description: Canonical entity name.
-        type:
-          type: string
-          description: 'Entity type. Values: person (an individual), organization (a company or institution; legacy rows may read company or brand), product (a product or service), topic (a subject or theme), channel (a media source such as a YouTube channel), unknown (type was never classified).'
-        slug:
+        mentions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mention'
+          description: Newest first.
+        has_more:
+          type: boolean
+          description: True when more rows exist past this page.
+        next_cursor:
           type:
           - string
           - 'null'
-          description: URL slug, the site's canonical id for every type but channel. Null when never slugged.
-        page:
-          type:
-          - string
-          - 'null'
-          description: The entity's page on arcmira.com, absolute. Link the name to it when you write the entity into an answer. Null for a type the site has no page for.
+          description: Opaque cursor for the next page. Null on the last page.
+        entity:
+          allOf:
+          - $ref: '#/components/schemas/Entity'
+          - description: The resolved entity the mentions belong to.
+        window:
+          $ref: '#/components/schemas/PublicationWindow'
+        note:
+          type: string
+          description: 'Present on a free preview page: where the list stops and the plan that lifts it. Say so rather than calling this every mention.'
+        unlock:
+          type: object
+          properties:
+            tier:
+              type: string
+              description: The plan that lifts the preview.
+            url:
+              type: string
+              description: Where to start that plan.
+          required:
+          - tier
+          - url
+          description: Present with note on a free preview page.
       required:
-      - id
-      - name
-      - type
-      - slug
-      - page
+      - mentions
+      - has_more
+      - next_cursor
+      - entity
+      - window
     MentionCountsResponse:
       type: object
       properties:
@@ -797,6 +552,288 @@ components:
             as_of: '2026-08-21T16:00:00.000Z'
         as_of: '2026-08-28T17:00:00.000Z'
         note: Catalog counts, all-time unless you passed a window. shared ranks true overlap by the smallest per-channel count. Use search_transcripts afterwards only for quotes.
+    EntityRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Public entity id in the form "ent_{n}".
+        name:
+          type: string
+          description: Canonical entity name.
+        type:
+          type: string
+          description: 'Entity type. Values: person (an individual), organization (a company or institution; legacy rows may read company or brand), product (a product or service), topic (a subject or theme), channel (a media source such as a YouTube channel), unknown (type was never classified).'
+        slug:
+          type:
+          - string
+          - 'null'
+          description: URL slug, the site's canonical id for every type but channel. Null when never slugged.
+        page:
+          type:
+          - string
+          - 'null'
+          description: The entity's page on arcmira.com, absolute. Link the name to it when you write the entity into an answer. Null for a type the site has no page for.
+      required:
+      - id
+      - name
+      - type
+      - slug
+      - page
+    ErrorResource:
+      oneOf:
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - media_rows
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - fresh_media
+          window_days:
+            type: integer
+          cutoff:
+            type:
+            - string
+            - 'null'
+        required:
+        - kind
+        - window_days
+        - cutoff
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - sidebar_rows
+          section:
+            type: string
+            enum:
+            - topics
+            - entities
+          beyond_row:
+            type: integer
+        required:
+        - kind
+        - section
+        - beyond_row
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - counts
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - chart
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - pagination
+          param:
+            type:
+            - string
+            - 'null'
+            enum:
+            - offset
+            - cursor
+            - null
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - premium_transcript
+        required:
+        - kind
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - filter
+          param:
+            type: string
+        required:
+        - kind
+        - param
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - commercial
+          what:
+            type: string
+            enum:
+            - sponsors
+            - recommendations
+            - mention_details
+            - community_review
+            - paid_split
+        required:
+        - kind
+        - what
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - feature
+          feature:
+            type: string
+            enum:
+            - api
+            - export
+        required:
+        - kind
+        - feature
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - rows
+          requested:
+            type:
+            - integer
+            - 'null'
+          remaining:
+            type:
+            - integer
+            - 'null'
+        required:
+        - kind
+        - requested
+        - remaining
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - key
+          scope:
+            type:
+            - string
+            - 'null'
+            enum:
+            - read
+            - monitors:write
+            - trackers:write
+            - recommendations:read
+            - null
+        required:
+        - kind
+        - scope
+      - type: object
+        properties:
+          kind:
+            type: string
+            enum:
+            - requests
+        required:
+        - kind
+      description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
+    PublicationWindow:
+      type: object
+      properties:
+        after:
+          type:
+          - string
+          - 'null'
+          description: Inclusive start as an ISO instant. Null when the window has no start.
+        before:
+          type:
+          - string
+          - 'null'
+          description: Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window.
+      required:
+      - after
+      - before
+      description: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    RecommendationEnrichmentItem:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Public recommendation id in the form "com_{n}".
+        class:
+          type: string
+          enum:
+          - sponsored
+          - organic
+          - mention
+          description: 'Commercial class. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
+        verbatim_quote:
+          type:
+          - string
+          - 'null'
+          description: Verbatim quote from the transcript. Null when no quote was extracted.
+        promo_code:
+          type:
+          - string
+          - 'null'
+          description: Promo code read out in the mention. Null unless one was detected.
+        offer:
+          type:
+          - string
+          - 'null'
+          description: Offer text, e.g. "20% off". Null unless one was detected.
+        confidence:
+          type: number
+          description: Classifier confidence between 0 and 1.
+        start_seconds:
+          type:
+          - integer
+          - 'null'
+          description: Start position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
+        end_seconds:
+          type:
+          - integer
+          - 'null'
+          description: End position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
+      required:
+      - id
+      - class
+      - verbatim_quote
+      - promo_code
+      - offer
+      - confidence
+      - start_seconds
+      - end_seconds
     Entity:
       type: object
       properties:
@@ -1178,116 +1215,6 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
-    RecommendationEnrichmentItem:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Public recommendation id in the form "com_{n}".
-        class:
-          type: string
-          enum:
-          - sponsored
-          - organic
-          - mention
-          description: 'Commercial class. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
-        verbatim_quote:
-          type:
-          - string
-          - 'null'
-          description: Verbatim quote from the transcript. Null when no quote was extracted.
-        promo_code:
-          type:
-          - string
-          - 'null'
-          description: Promo code read out in the mention. Null unless one was detected.
-        offer:
-          type:
-          - string
-          - 'null'
-          description: Offer text, e.g. "20% off". Null unless one was detected.
-        confidence:
-          type: number
-          description: Classifier confidence between 0 and 1.
-        start_seconds:
-          type:
-          - integer
-          - 'null'
-          description: Start position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
-        end_seconds:
-          type:
-          - integer
-          - 'null'
-          description: End position in the video in integer seconds. 0 means "full episode / no specific moment". Null when the analyzer could not place it in time.
-      required:
-      - id
-      - class
-      - verbatim_quote
-      - promo_code
-      - offer
-      - confidence
-      - start_seconds
-      - end_seconds
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
-      required:
-      - quarters
-      - rows
-    RefusedQuote:
-      allOf:
-      - $ref: '#/components/schemas/TranscriptQuote'
-      - type: object
-        properties:
-          charge:
-            type: object
-            properties:
-              unit:
-                type: string
-                enum:
-                - rows
-                - credits
-              amount:
-                type: number
-              from:
-                type: string
-                enum:
-                - included
-                - on_demand
-                - mixed
-                description: Where the charge would come from at the current balance.
-            required:
-            - unit
-            - amount
-            - from
-            description: What the purchase would charge at the current balance. Absent when no current price could be read.
-          max_on_demand_cents:
-            type: integer
-            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
-      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
-    PublicationWindow:
-      type: object
-      properties:
-        after:
-          type:
-          - string
-          - 'null'
-          description: Inclusive start as an ISO instant. Null when the window has no start.
-        before:
-          type:
-          - string
-          - 'null'
-          description: Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window.
-      required:
-      - after
-      - before
-      description: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
     Mention:
       type: object
       properties:
@@ -1433,77 +1360,150 @@ components:
       - referenced_url
       - referenced_platform
       - extracted_content
-    MentionListResponse:
-      type: object
-      properties:
-        mentions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Mention'
-          description: Newest first.
-        has_more:
-          type: boolean
-          description: True when more rows exist past this page.
-        next_cursor:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. Null on the last page.
-        entity:
-          allOf:
-          - $ref: '#/components/schemas/Entity'
-          - description: The resolved entity the mentions belong to.
-        window:
-          $ref: '#/components/schemas/PublicationWindow'
-        note:
-          type: string
-          description: 'Present on a free preview page: where the list stops and the plan that lifts it. Say so rather than calling this every mention.'
-        unlock:
-          type: object
-          properties:
-            tier:
-              type: string
-              description: The plan that lifts the preview.
-            url:
-              type: string
-              description: Where to start that plan.
-          required:
-          - tier
-          - url
-          description: Present with note on a free preview page.
-      required:
-      - mentions
-      - has_more
-      - next_cursor
-      - entity
-      - window
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
   headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    RateLimit-Remaining:
-      description: Requests left in the current window.
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
       schema:
         type: integer
     RateLimit-Reset:
       description: Unix time in seconds when the current window ends.
       schema:
         type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
     Retry-After:
       description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
       schema:
         type: integer
     X-Request-Id:
       description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
       schema:
         type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
+  responses:
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidRequest:
+      description: Invalid request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    QuotaExceeded:
+      description: Quota exceeded
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

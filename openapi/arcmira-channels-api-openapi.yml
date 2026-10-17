@@ -157,7 +157,56 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
+  headers:
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
   responses:
+    PermissionError:
+      description: Permission error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     RateLimited:
       description: Rate limit exceeded. Retry-After carries the wait.
       headers:
@@ -177,8 +226,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Not found
+    ServerError:
+      description: Server error
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+        X-Arcmira-Version:
+          $ref: '#/components/headers/X-Arcmira-Version'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthenticationError:
+      description: Authentication error
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
@@ -210,186 +270,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    AuthenticationError:
-      description: Authentication error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
-      headers:
-        X-Request-Id:
-          $ref: '#/components/headers/X-Request-Id'
-        X-Arcmira-Version:
-          $ref: '#/components/headers/X-Arcmira-Version'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    ChannelVideosResponse:
-      type: object
-      properties:
-        channel:
-          type: object
-          properties:
-            id:
-              type:
-              - string
-              - 'null'
-              description: Public entity id ("ent_{n}") of the channel. Null when no channel entity is known.
-            youtube_channel_id:
-              type: string
-              description: The channel id as supplied.
-            name:
-              type:
-              - string
-              - 'null'
-            page:
-              type:
-              - string
-              - 'null'
-              description: The channel's page on arcmira.com, absolute. Null when no channel is known.
-          required:
-          - id
-          - youtube_channel_id
-          - name
-          - page
-        episodes:
-          type: array
-          items:
-            type: object
-            properties:
-              video_id:
-                type: string
-                description: 11-character YouTube video id. Pass it to GET /v1/mentions/counts video_ids or GET /v1/transcripts/{video_id}.
-              title:
-                type:
-                - string
-                - 'null'
-              published_at:
-                type:
-                - string
-                - 'null'
-                description: ISO publish date on YouTube.
-              duration_seconds:
-                type:
-                - integer
-                - 'null'
-                description: Video length in seconds. Null when YouTube reported none.
-              view_count:
-                type:
-                - integer
-                - 'null'
-              channel_id:
-                type: string
-                description: The channel id as supplied.
-              channel_name:
-                type:
-                - string
-                - 'null'
-              channel_page:
-                type:
-                - string
-                - 'null'
-                description: The channel's page on arcmira.com, absolute. Null when no channel is known.
-              watch_url:
-                type: string
-                description: The episode on arcmira.com, absolute.
-            required:
-            - video_id
-            - title
-            - published_at
-            - duration_seconds
-            - view_count
-            - channel_id
-            - channel_name
-            - channel_page
-            - watch_url
-          description: Indexed videos of the channel, newest first.
-        returned:
-          type: integer
-        has_more:
-          type: boolean
-          description: True when more indexed videos exist past limit in the window.
-        next_cursor:
-          type:
-          - string
-          - 'null'
-          description: Signed continuation for the next page. Null on the last page.
-        window:
-          $ref: '#/components/schemas/PublicationWindow'
-        indexed_through:
-          type:
-          - string
-          - 'null'
-          description: Newest publish date among every indexed video of the channel, whatever window was asked for. Null when nothing is indexed.
-        index_age_days:
-          type:
-          - integer
-          - 'null'
-          description: Whole days between indexed_through and now. Past 30 the note says the index may be behind the channel. Null when nothing is indexed.
-        as_of:
-          type:
-          - string
-          - 'null'
-          description: Same as indexed_through.
-        note:
-          type: string
-          description: One steering sentence for the agent reading this.
-      required:
-      - channel
-      - episodes
-      - returned
-      - has_more
-      - next_cursor
-      - window
-      - indexed_through
-      - index_age_days
-      - as_of
-      - note
-      example:
-        channel:
-          id: ent_566342
-          youtube_channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
-          name: TBPN
-          page: https://arcmira.com/yt/@TBPNLive
-        episodes:
-        - video_id: dQw4w9WgXcQ
-          title: TBPN | Friday, August 28
-          published_at: '2026-08-28T17:00:00.000Z'
-          duration_seconds: 10812
-          view_count: 48210
-          channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
-          channel_name: TBPN
-          channel_page: https://arcmira.com/yt/@TBPNLive
-          watch_url: https://arcmira.com/watch?v=dQw4w9WgXcQ
-        returned: 1
-        has_more: true
-        window:
-          after: '2026-08-01T00:00:00Z'
-          before: null
-        indexed_through: '2026-08-28T17:00:00.000Z'
-        index_age_days: 3
-        as_of: '2026-08-28T17:00:00.000Z'
-        note: Newest indexed episodes first. Pass a video_id to count_occurrences videoIds to list what one episode mentions, or to get_transcript to read it.
     ErrorResource:
       oneOf:
       - type: object
@@ -565,65 +446,181 @@ components:
         required:
         - kind
       description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    ChannelCoverageResponse:
+    PublicationWindow:
+      type: object
+      properties:
+        after:
+          type:
+          - string
+          - 'null'
+          description: Inclusive start as an ISO instant. Null when the window has no start.
+        before:
+          type:
+          - string
+          - 'null'
+          description: Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window.
+      required:
+      - after
+      - before
+      description: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
+    ChannelVideosResponse:
       type: object
       properties:
         channel:
           type: object
           properties:
+            id:
+              type:
+              - string
+              - 'null'
+              description: Public entity id ("ent_{n}") of the channel. Null when no channel entity is known.
             youtube_channel_id:
               type: string
               description: The channel id as supplied.
-            searchable_videos:
-              type: integer
-              description: Videos with a completed transcript. 0 means we do not cover the channel.
-            indexed_through:
+            name:
               type:
               - string
               - 'null'
-              description: Newest publish date among those videos. Mentions, entity lookups and transcripts read through here. Null when nothing is indexed.
-            search_indexed_through:
+            page:
               type:
               - string
               - 'null'
-              description: Newest publish date transcript search can hit. New transcripts are searchable when they are indexed, so it equals indexed_through.
-            source_mix:
-              type: object
-              properties:
-                arcmira_premium:
-                  type: integer
-                creator_captions:
-                  type: integer
-                third_party_quick:
-                  type: integer
-              required:
-              - arcmira_premium
-              - creator_captions
-              - third_party_quick
-              description: searchable_videos split by transcript source class.
+              description: The channel's page on arcmira.com, absolute. Null when no channel is known.
           required:
+          - id
           - youtube_channel_id
-          - searchable_videos
-          - indexed_through
-          - search_indexed_through
-          - source_mix
+          - name
+          - page
+        episodes:
+          type: array
+          items:
+            type: object
+            properties:
+              video_id:
+                type: string
+                description: 11-character YouTube video id. Pass it to GET /v1/mentions/counts video_ids or GET /v1/transcripts/{video_id}.
+              title:
+                type:
+                - string
+                - 'null'
+              published_at:
+                type:
+                - string
+                - 'null'
+                description: ISO publish date on YouTube.
+              duration_seconds:
+                type:
+                - integer
+                - 'null'
+                description: Video length in seconds. Null when YouTube reported none.
+              view_count:
+                type:
+                - integer
+                - 'null'
+              channel_id:
+                type: string
+                description: The channel id as supplied.
+              channel_name:
+                type:
+                - string
+                - 'null'
+              channel_page:
+                type:
+                - string
+                - 'null'
+                description: The channel's page on arcmira.com, absolute. Null when no channel is known.
+              watch_url:
+                type: string
+                description: The episode on arcmira.com, absolute.
+            required:
+            - video_id
+            - title
+            - published_at
+            - duration_seconds
+            - view_count
+            - channel_id
+            - channel_name
+            - channel_page
+            - watch_url
+          description: Indexed videos of the channel, newest first.
+        returned:
+          type: integer
+        has_more:
+          type: boolean
+          description: True when more indexed videos exist past limit in the window.
+        next_cursor:
+          type:
+          - string
+          - 'null'
+          description: Signed continuation for the next page. Null on the last page.
+        window:
+          $ref: '#/components/schemas/PublicationWindow'
+        indexed_through:
+          type:
+          - string
+          - 'null'
+          description: Newest publish date among every indexed video of the channel, whatever window was asked for. Null when nothing is indexed.
+        index_age_days:
+          type:
+          - integer
+          - 'null'
+          description: Whole days between indexed_through and now. Past 30 the note says the index may be behind the channel. Null when nothing is indexed.
+        as_of:
+          type:
+          - string
+          - 'null'
+          description: Same as indexed_through.
         note:
           type: string
           description: One steering sentence for the agent reading this.
       required:
       - channel
+      - episodes
+      - returned
+      - has_more
+      - next_cursor
+      - window
+      - indexed_through
+      - index_age_days
+      - as_of
       - note
       example:
         channel:
+          id: ent_566342
           youtube_channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
-          searchable_videos: 412
-          indexed_through: '2026-08-28T17:00:00.000Z'
-          search_indexed_through: '2026-08-28T17:00:00.000Z'
-          source_mix:
-            arcmira_premium: 96
-            creator_captions: 301
-            third_party_quick: 15
-        note: Cite indexed_through as the as-of date for mentions and search_indexed_through for transcript search. An empty search is a miss up to search_indexed_through, not proof it was never said.
+          name: TBPN
+          page: https://arcmira.com/yt/@TBPNLive
+        episodes:
+        - video_id: dQw4w9WgXcQ
+          title: TBPN | Friday, August 28
+          published_at: '2026-08-28T17:00:00.000Z'
+          duration_seconds: 10812
+          view_count: 48210
+          channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
+          channel_name: TBPN
+          channel_page: https://arcmira.com/yt/@TBPNLive
+          watch_url: https://arcmira.com/watch?v=dQw4w9WgXcQ
+        returned: 1
+        has_more: true
+        window:
+          after: '2026-08-01T00:00:00Z'
+          before: null
+        indexed_through: '2026-08-28T17:00:00.000Z'
+        index_age_days: 3
+        as_of: '2026-08-28T17:00:00.000Z'
+        note: Newest indexed episodes first. Pass a video_id to count_occurrences videoIds to list what one episode mentions, or to get_transcript to read it.
+    TranscriptQuote:
+      type: object
+      properties:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
     Error:
       type: object
       properties:
@@ -911,18 +908,65 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
-    TranscriptQuote:
+    ChannelCoverageResponse:
       type: object
       properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+        channel:
+          type: object
+          properties:
+            youtube_channel_id:
+              type: string
+              description: The channel id as supplied.
+            searchable_videos:
+              type: integer
+              description: Videos with a completed transcript. 0 means we do not cover the channel.
+            indexed_through:
+              type:
+              - string
+              - 'null'
+              description: Newest publish date among those videos. Mentions, entity lookups and transcripts read through here. Null when nothing is indexed.
+            search_indexed_through:
+              type:
+              - string
+              - 'null'
+              description: Newest publish date transcript search can hit. New transcripts are searchable when they are indexed, so it equals indexed_through.
+            source_mix:
+              type: object
+              properties:
+                arcmira_premium:
+                  type: integer
+                creator_captions:
+                  type: integer
+                third_party_quick:
+                  type: integer
+              required:
+              - arcmira_premium
+              - creator_captions
+              - third_party_quick
+              description: searchable_videos split by transcript source class.
+          required:
+          - youtube_channel_id
+          - searchable_videos
+          - indexed_through
+          - search_indexed_through
+          - source_mix
+        note:
+          type: string
+          description: One steering sentence for the agent reading this.
       required:
-      - quarters
-      - rows
+      - channel
+      - note
+      example:
+        channel:
+          youtube_channel_id: UC-DRzaGnL_vtBUpCFH5M0tg
+          searchable_videos: 412
+          indexed_through: '2026-08-28T17:00:00.000Z'
+          search_indexed_through: '2026-08-28T17:00:00.000Z'
+          source_mix:
+            arcmira_premium: 96
+            creator_captions: 301
+            third_party_quick: 15
+        note: Cite indexed_through as the as-of date for mentions and search_indexed_through for transcript search. An empty search is a miss up to search_indexed_through, not proof it was never said.
     RefusedQuote:
       allOf:
       - $ref: '#/components/schemas/TranscriptQuote'
@@ -954,50 +998,6 @@ components:
             type: integer
             description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
       description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
-    PublicationWindow:
-      type: object
-      properties:
-        after:
-          type:
-          - string
-          - 'null'
-          description: Inclusive start as an ISO instant. Null when the window has no start.
-        before:
-          type:
-          - string
-          - 'null'
-          description: Exclusive end as an ISO instant. Null when the window has no end. Earlier than the before you sent when your plan's freshness gate cut the window.
-      required:
-      - after
-      - before
-      description: The publication window the answer covers, [after, before) in UTC, normalized from after and before.
-  headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    RateLimit-Remaining:
-      description: Requests left in the current window.
-      schema:
-        type: integer
-    RateLimit-Reset:
-      description: Unix time in seconds when the current window ends.
-      schema:
-        type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
-    Retry-After:
-      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
-      schema:
-        type: integer
-    X-Request-Id:
-      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
-      schema:
-        type: string
   securitySchemes:
     bearerAuth:
       type: http

@@ -416,22 +416,47 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 components:
+  headers:
+    Idempotency-Replayed:
+      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
+      schema:
+        type: string
+        enum:
+        - 'true'
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
   responses:
-    RateLimited:
-      description: Rate limit exceeded. Retry-After carries the wait.
+    PermissionError:
+      description: Permission error
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
         X-Arcmira-Version:
           $ref: '#/components/headers/X-Arcmira-Version'
-        RateLimit-Limit:
-          $ref: '#/components/headers/RateLimit-Limit'
-        RateLimit-Remaining:
-          $ref: '#/components/headers/RateLimit-Remaining'
-        RateLimit-Reset:
-          $ref: '#/components/headers/RateLimit-Reset'
-        Retry-After:
-          $ref: '#/components/headers/Retry-After'
       content:
         application/json:
           schema:
@@ -447,13 +472,21 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    InvalidRequest:
-      description: Invalid request
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
         X-Arcmira-Version:
           $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
       content:
         application/json:
           schema:
@@ -480,8 +513,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
+    InvalidRequest:
+      description: Invalid request
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
@@ -667,43 +700,169 @@ components:
         required:
         - kind
       description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    AlertListResponse:
+    TranscriptQuote:
       type: object
       properties:
-        alerts:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Alert delivery id.
+        tracker_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the tracker (tracked entity) that produced the alert.
+        monitor_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the monitor the tracker belongs to. Null for trackers outside a monitor.
+        entity_id:
+          type:
+          - string
+          - 'null'
+          description: Public id ("ent_{n}") of the entity that triggered the alert, when recorded. Null on older rows that were written before entity_id was stored on alert_delivery. Resolve the entity through mention_id or the embedded tracker when this is null.
+        mention_id:
+          type:
+          - string
+          - 'null'
+          description: Public id ("men_{n}") of the mention/appearance row that triggered the alert. Joins directly against mention rows (e.g. /v1/mentions). Null when not appearance-scoped.
+        video_id:
+          type:
+          - string
+          - 'null'
+          description: YouTube video id (11 characters) of the video that triggered the alert. Null when not media-scoped.
+        excerpt_id:
+          type:
+          - string
+          - 'null'
+          description: Id of the active mention excerpt used as mention evidence. Null when the alert was sent before evidence was recorded.
+        evidence_kind:
+          type:
+          - string
+          - 'null'
+          enum:
+          - excerpt
+          - null
+          description: Which evidence layer was sent. Null on older rows.
+        channel:
+          type: string
+          description: 'Delivery channel. Values: email (sent by email), webhook (POSTed to the configured webhook URL), slack (sent to Slack).'
+        status:
+          type: string
+          description: 'Delivery status. Values: pending (queued for delivery), sent (delivered), failed (delivery failed; see error_message), skipped (delivery intentionally skipped).'
+        final_status:
+          type:
+          - string
+          - 'null'
+          description: Terminal status after retries. Null while delivery is still in progress.
+        error_message:
+          type:
+          - string
+          - 'null'
+          description: Error details for failed deliveries. Null unless delivery failed.
+        scheduled_at:
+          type:
+          - string
+          - 'null'
+          description: When delivery was scheduled. Null when delivered immediately.
+        sent_at:
+          type:
+          - string
+          - 'null'
+          description: When the alert was actually sent. Null until delivery succeeds.
+        created_at:
+          type: string
+          description: When the alert row was created.
+        tracker:
+          type: object
+          properties:
+            id:
+              type:
+              - string
+              - 'null'
+              description: Tracker id.
+            entity_name:
+              type:
+              - string
+              - 'null'
+              description: Tracked entity name.
+            entity_type:
+              type:
+              - string
+              - 'null'
+              description: Tracked entity type.
+            display_name:
+              type:
+              - string
+              - 'null'
+              description: User-facing display name for the tracker. Null when not customized.
+          required:
+          - id
+          - entity_name
+          - entity_type
+          - display_name
+          description: The tracker the alert belongs to. Fields are null when the tracker row was deleted.
+        monitor:
+          type:
+          - object
+          - 'null'
+          properties:
+            id:
+              type: string
+              description: Monitor id.
+            name:
+              type:
+              - string
+              - 'null'
+              description: Monitor name.
+          required:
+          - id
+          - name
+          description: The monitor the tracker belongs to. Null for trackers outside a monitor.
+      required:
+      - id
+      - tracker_id
+      - monitor_id
+      - entity_id
+      - mention_id
+      - video_id
+      - excerpt_id
+      - evidence_kind
+      - channel
+      - status
+      - final_status
+      - error_message
+      - scheduled_at
+      - sent_at
+      - created_at
+      - tracker
+      - monitor
+    TrackerListResponse:
+      type: object
+      properties:
+        trackers:
           type: array
           items:
-            $ref: '#/components/schemas/Alert'
-          description: Newest alerts first.
-        has_more:
-          type: boolean
-          description: 'True when older alerts exist past limit. The endpoint does not paginate: raise limit, up to 100, to read them.'
-        next_cursor:
-          type: 'null'
-          description: 'Always null: this endpoint does not paginate.'
+            $ref: '#/components/schemas/Tracker'
+          description: All trackers for the account, newest first.
+        count:
+          type: integer
+          description: Number of trackers returned.
       required:
-      - alerts
-      - has_more
-      - next_cursor
-    MessageResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          description: Human-readable confirmation.
-      required:
-      - message
-    TrackerMutationResponse:
-      type: object
-      properties:
-        tracker:
-          $ref: '#/components/schemas/Tracker'
-        message:
-          type: string
-          description: Human-readable confirmation.
-      required:
-      - tracker
-      - message
+      - trackers
+      - count
     Error:
       type: object
       properties:
@@ -991,6 +1150,35 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
+    AlertListResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+          description: Newest alerts first.
+        has_more:
+          type: boolean
+          description: 'True when older alerts exist past limit. The endpoint does not paginate: raise limit, up to 100, to read them.'
+        next_cursor:
+          type: 'null'
+          description: 'Always null: this endpoint does not paginate.'
+      required:
+      - alerts
+      - has_more
+      - next_cursor
+    TrackerMutationResponse:
+      type: object
+      properties:
+        tracker:
+          $ref: '#/components/schemas/Tracker'
+        message:
+          type: string
+          description: Human-readable confirmation.
+      required:
+      - tracker
+      - message
     Tracker:
       type: object
       properties:
@@ -1088,18 +1276,6 @@ components:
       - email_delivery_count
       - webhook_delivery_count
       - slack_delivery_count
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
-      required:
-      - quarters
-      - rows
     RefusedQuote:
       allOf:
       - $ref: '#/components/schemas/TranscriptQuote'
@@ -1131,190 +1307,14 @@ components:
             type: integer
             description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
       description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
-    Alert:
+    MessageResponse:
       type: object
       properties:
-        id:
+        message:
           type: string
-          description: Alert delivery id.
-        tracker_id:
-          type:
-          - string
-          - 'null'
-          description: Id of the tracker (tracked entity) that produced the alert.
-        monitor_id:
-          type:
-          - string
-          - 'null'
-          description: Id of the monitor the tracker belongs to. Null for trackers outside a monitor.
-        entity_id:
-          type:
-          - string
-          - 'null'
-          description: Public id ("ent_{n}") of the entity that triggered the alert, when recorded. Null on older rows that were written before entity_id was stored on alert_delivery. Resolve the entity through mention_id or the embedded tracker when this is null.
-        mention_id:
-          type:
-          - string
-          - 'null'
-          description: Public id ("men_{n}") of the mention/appearance row that triggered the alert. Joins directly against mention rows (e.g. /v1/mentions). Null when not appearance-scoped.
-        video_id:
-          type:
-          - string
-          - 'null'
-          description: YouTube video id (11 characters) of the video that triggered the alert. Null when not media-scoped.
-        excerpt_id:
-          type:
-          - string
-          - 'null'
-          description: Id of the active mention excerpt used as mention evidence. Null when the alert was sent before evidence was recorded.
-        evidence_kind:
-          type:
-          - string
-          - 'null'
-          enum:
-          - excerpt
-          - null
-          description: Which evidence layer was sent. Null on older rows.
-        channel:
-          type: string
-          description: 'Delivery channel. Values: email (sent by email), webhook (POSTed to the configured webhook URL), slack (sent to Slack).'
-        status:
-          type: string
-          description: 'Delivery status. Values: pending (queued for delivery), sent (delivered), failed (delivery failed; see error_message), skipped (delivery intentionally skipped).'
-        final_status:
-          type:
-          - string
-          - 'null'
-          description: Terminal status after retries. Null while delivery is still in progress.
-        error_message:
-          type:
-          - string
-          - 'null'
-          description: Error details for failed deliveries. Null unless delivery failed.
-        scheduled_at:
-          type:
-          - string
-          - 'null'
-          description: When delivery was scheduled. Null when delivered immediately.
-        sent_at:
-          type:
-          - string
-          - 'null'
-          description: When the alert was actually sent. Null until delivery succeeds.
-        created_at:
-          type: string
-          description: When the alert row was created.
-        tracker:
-          type: object
-          properties:
-            id:
-              type:
-              - string
-              - 'null'
-              description: Tracker id.
-            entity_name:
-              type:
-              - string
-              - 'null'
-              description: Tracked entity name.
-            entity_type:
-              type:
-              - string
-              - 'null'
-              description: Tracked entity type.
-            display_name:
-              type:
-              - string
-              - 'null'
-              description: User-facing display name for the tracker. Null when not customized.
-          required:
-          - id
-          - entity_name
-          - entity_type
-          - display_name
-          description: The tracker the alert belongs to. Fields are null when the tracker row was deleted.
-        monitor:
-          type:
-          - object
-          - 'null'
-          properties:
-            id:
-              type: string
-              description: Monitor id.
-            name:
-              type:
-              - string
-              - 'null'
-              description: Monitor name.
-          required:
-          - id
-          - name
-          description: The monitor the tracker belongs to. Null for trackers outside a monitor.
+          description: Human-readable confirmation.
       required:
-      - id
-      - tracker_id
-      - monitor_id
-      - entity_id
-      - mention_id
-      - video_id
-      - excerpt_id
-      - evidence_kind
-      - channel
-      - status
-      - final_status
-      - error_message
-      - scheduled_at
-      - sent_at
-      - created_at
-      - tracker
-      - monitor
-    TrackerListResponse:
-      type: object
-      properties:
-        trackers:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tracker'
-          description: All trackers for the account, newest first.
-        count:
-          type: integer
-          description: Number of trackers returned.
-      required:
-      - trackers
-      - count
-  headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    Idempotency-Replayed:
-      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
-      schema:
-        type: string
-        enum:
-        - 'true'
-    RateLimit-Remaining:
-      description: Requests left in the current window.
-      schema:
-        type: integer
-    RateLimit-Reset:
-      description: Unix time in seconds when the current window ends.
-      schema:
-        type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
-    Retry-After:
-      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
-      schema:
-        type: integer
-    X-Request-Id:
-      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
-      schema:
-        type: string
+      - message
   securitySchemes:
     bearerAuth:
       type: http

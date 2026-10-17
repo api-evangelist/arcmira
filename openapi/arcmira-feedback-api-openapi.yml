@@ -274,6 +274,104 @@ paths:
           $ref: '#/components/responses/ServerError'
 components:
   schemas:
+    WrongClassificationChange:
+      type: object
+      properties:
+        class:
+          type: string
+          enum:
+          - sponsored
+          - organic
+          - mention
+          description: 'The correct commercial class. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
+      additionalProperties: {}
+      description: 'For issue_type wrong_classification: the commercial class the row should carry.'
+    StaleMetadataChange:
+      type: object
+      properties:
+        field:
+          type: string
+          description: The metadata field that is outdated, e.g. "website" or "name".
+        value:
+          description: The current, correct value.
+        source_url:
+          type: string
+          description: URL evidencing the correct value.
+      additionalProperties: {}
+      description: 'For issue_type stale_metadata: the field and its correct value, with a source URL when you have one.'
+    BadRankingChange:
+      type: object
+      properties:
+        expected_rank:
+          type: integer
+          description: Where the row should have ranked (1-based).
+        observed_rank:
+          type: integer
+          description: Where the row actually ranked (1-based). Most useful on search feedback.
+      additionalProperties: {}
+      description: 'For issue_type bad_ranking: the expected and observed positions of the row.'
+    FeedbackReadbackCorrection:
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: The correction target id as submitted (or a generated placeholder when omitted).
+        item_kind:
+          type: string
+          description: 'Inferred kind of the target. Values include: recommendation, sponsor_entity, entity, entity_merge, mention, appearance, alert, alert_expectation, unknown.'
+        issue_type:
+          type:
+          - string
+          - 'null'
+          description: The issue_type as submitted. Null when the correction carried only a reason or class.
+        reason:
+          type:
+          - string
+          - 'null'
+          description: The commercial reason code as submitted. Null unless the correction was a commercial-class dispute.
+        suggested_change:
+          type:
+          - object
+          - 'null'
+          additionalProperties: {}
+          description: The suggested_change object as submitted. Null when none was supplied.
+        notes:
+          type:
+          - string
+          - 'null'
+          description: The per-correction notes as submitted. Null when none were supplied.
+        status:
+          type: string
+          enum:
+          - pending_review
+          - needs_information
+          - accepted
+          - accepted_with_changes
+          - rejected
+          - withdrawn
+          - applied
+          - reverted
+          description: 'Review status in the public vocabulary. Values: pending_review (submitted; a reviewer has not finished with it), needs_information (a reviewer needs more detail from you; add context in a support thread quoting the feedback_id), accepted (the correction was accepted as submitted), accepted_with_changes (accepted, but the reviewer resolved it differently than proposed), rejected (reviewed and declined), withdrawn (withdrawn by the submitter before review), applied (the accepted change is live in the index; accepted does not imply applied), reverted (a previously applied change was rolled back).'
+        resolution_note:
+          type:
+          - string
+          - 'null'
+          description: Reviewer-written public note about how the correction was resolved. Null until a reviewer leaves one.
+        created_at:
+          type:
+          - string
+          - 'null'
+          description: When the correction row was created.
+      required:
+      - item_id
+      - item_kind
+      - issue_type
+      - reason
+      - suggested_change
+      - notes
+      - status
+      - resolution_note
+      - created_at
     WrongEntityTypeChange:
       type: object
       properties:
@@ -291,6 +389,54 @@ components:
       type: object
       additionalProperties: {}
       description: Any other object shape. Accepted and logged verbatim for human review; prefer the typed shapes above when one fits your issue_type.
+    MergeSuggestionChange:
+      type: object
+      properties:
+        source_entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the duplicate/variant entity to merge away.
+        target_entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the canonical entity to merge into.
+        source_name:
+          type: string
+          description: Name of the duplicate entity when you do not have its id.
+        merge_into:
+          type: string
+          description: Name or public id of the canonical entity when you do not have target_entity_id.
+        scope_type:
+          type: string
+          description: Scope of the merge rule, e.g. "global".
+      additionalProperties: {}
+      description: 'For issue_type merge_suggestion (and duplicate_entity): the canonical merge you are proposing. Provide ids when you have them, names otherwise.'
+    WrongEntityChange:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the entity the row should point at.
+        entity_name:
+          type: string
+          description: Name of the correct entity when you do not have its id.
+        entity_type:
+          type: string
+          description: 'Type of the correct entity: person, organization, product, topic, or channel.'
+      additionalProperties: {}
+      description: 'For issue_type wrong_entity (and wrong_person): the entity the row should have been attributed to.'
+    MissingResultChange:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the missing entity or result.
+        entity_type:
+          type: string
+          description: 'Type of the missing entity: person, organization, product, topic, or channel.'
+        source_url:
+          type: string
+          description: URL evidencing the missing result (video, channel, or article).
+      additionalProperties: {}
+      description: 'For issue_type missing_result: what should have been returned. Put video/channel/timestamp context in notes.'
     ErrorResource:
       oneOf:
       - type: object
@@ -466,92 +612,87 @@ components:
         required:
         - kind
       description: The value the boundary withheld, not the reason it refused. kind is a closed vocabulary and the fields beside it are fixed per kind; see https://arcmira.com/docs/errors#resource-kinds.
-    FeedbackCorrectionResult:
+    TranscriptQuote:
       type: object
       properties:
-        item_id:
+        quarters:
+          type: integer
+          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
+        rows:
+          type: integer
+          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
+      required:
+      - quarters
+      - rows
+    FeedbackResponse:
+      type: object
+      properties:
+        feedback_id:
           type: string
-          description: The correction target id you supplied (or a generated placeholder when omitted).
-        item_kind:
+          description: Id of the persisted feedback record, fbk_ and digits. Read it back via GET /v1/feedback/{feedback_id}.
+        type:
           type: string
-          description: 'Inferred kind of the target. Values include: recommendation, sponsor_entity, entity, entity_merge, mention, appearance, alert, alert_expectation, unknown.'
-        status:
+          description: 'The feedback type you submitted. Values: recommendations, channel_sponsors, mentions, entities_search, entities, channels, monitor_alert, appearances, search, experience.'
+        query:
+          type: object
+          additionalProperties: {}
+          description: The query object the feedback is attached to, echoed back. category and mcp_call_id, when sent, are recorded in it under those names.
+        applied:
+          type: integer
+          description: 'Count of corrections applied automatically. CURRENTLY always 0: public submissions are logged for review, never auto-applied.'
+        unchanged:
+          type: integer
+          description: Count of corrections whose target already had the requested value. Currently always 0 for public submissions.
+        failed:
+          type: integer
+          description: Count of corrections that could not be processed. Currently always 0 for public submissions.
+        logged:
+          type: integer
+          description: Count of corrections recorded for human review.
+        corrections:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackCorrectionResult'
+          description: Per-correction outcomes, in submission order.
+      required:
+      - feedback_id
+      - type
+      - query
+      - applied
+      - unchanged
+      - failed
+      - logged
+      - corrections
+    MissedAlertChange:
+      type: object
+      properties:
+        source_url:
+          type: string
+          description: URL of the media that should have produced an alert.
+        approximate_timestamp_seconds:
+          type: number
+          description: Approximate position of the missed occurrence, in seconds from the start of the media.
+        entity_id:
+          type: string
+          description: Public id ("ent_{n}") of the tracked entity the missed alert concerns.
+      required:
+      - source_url
+      additionalProperties: {}
+      description: 'For issue_type missed_alert: an expectation with no alert row to target. Omit the correction id and describe where the alert should have fired.'
+    DeliveryIssueChange:
+      type: object
+      properties:
+        channel:
           type: string
           enum:
-          - applied
-          - unchanged
-          - not_found
-          - invalid
-          - logged
-          description: 'Outcome. Values: applied (the correction was applied automatically), unchanged (the target already had the requested value), not_found (the target does not exist), invalid (the correction payload was malformed for its kind), logged (recorded for human review; no automatic apply).'
-        reason:
-          type: string
-          description: The reason code you supplied, echoed back.
-        message:
-          type: string
-          description: Human-readable explanation of the outcome.
+          - email
+          - webhook
+          - slack
+          description: 'The delivery channel the issue concerns. Values: email, webhook, slack.'
       required:
-      - item_id
-      - item_kind
-      - status
-    MissingResultChange:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the missing entity or result.
-        entity_type:
-          type: string
-          description: 'Type of the missing entity: person, organization, product, topic, or channel.'
-        source_url:
-          type: string
-          description: URL evidencing the missing result (video, channel, or article).
+      - channel
       additionalProperties: {}
-      description: 'For issue_type missing_result: what should have been returned. Put video/channel/timestamp context in notes.'
-    MergeSuggestionChange:
-      type: object
-      properties:
-        source_entity_id:
-          type: string
-          description: Public id ("ent_{n}") of the duplicate/variant entity to merge away.
-        target_entity_id:
-          type: string
-          description: Public id ("ent_{n}") of the canonical entity to merge into.
-        source_name:
-          type: string
-          description: Name of the duplicate entity when you do not have its id.
-        merge_into:
-          type: string
-          description: Name or public id of the canonical entity when you do not have target_entity_id.
-        scope_type:
-          type: string
-          description: Scope of the merge rule, e.g. "global".
-      additionalProperties: {}
-      description: 'For issue_type merge_suggestion (and duplicate_entity): the canonical merge you are proposing. Provide ids when you have them, names otherwise.'
-    BadRankingChange:
-      type: object
-      properties:
-        expected_rank:
-          type: integer
-          description: Where the row should have ranked (1-based).
-        observed_rank:
-          type: integer
-          description: Where the row actually ranked (1-based). Most useful on search feedback.
-      additionalProperties: {}
-      description: 'For issue_type bad_ranking: the expected and observed positions of the row.'
-    StaleMetadataChange:
-      type: object
-      properties:
-        field:
-          type: string
-          description: The metadata field that is outdated, e.g. "website" or "name".
-        value:
-          description: The current, correct value.
-        source_url:
-          type: string
-          description: URL evidencing the correct value.
-      additionalProperties: {}
-      description: 'For issue_type stale_metadata: the field and its correct value, with a source URL when you have one.'
+      description: 'For issue_type delivery_issue: targets the delivery row (the correction id) and names the channel that was wrong or never received.'
     Error:
       type: object
       properties:
@@ -839,192 +980,6 @@ components:
       - code: webhook_not_configured
         type: conflict_error
         description: The monitor has no webhook to rotate a secret for. Set webhook_url first.
-    WrongClassificationChange:
-      type: object
-      properties:
-        class:
-          type: string
-          enum:
-          - sponsored
-          - organic
-          - mention
-          description: 'The correct commercial class. Values: sponsored (an ad-style promotion heard at that moment: a paid sponsor read, promo code, affiliate plug, thanks for supplied goods or venue, or a show promoting its own product as an ad), organic (an unpaid personal recommendation), mention (a neutral commercial mention).'
-      additionalProperties: {}
-      description: 'For issue_type wrong_classification: the commercial class the row should carry.'
-    FeedbackResponse:
-      type: object
-      properties:
-        feedback_id:
-          type: string
-          description: Id of the persisted feedback record, fbk_ and digits. Read it back via GET /v1/feedback/{feedback_id}.
-        type:
-          type: string
-          description: 'The feedback type you submitted. Values: recommendations, channel_sponsors, mentions, entities_search, entities, channels, monitor_alert, appearances, search, experience.'
-        query:
-          type: object
-          additionalProperties: {}
-          description: The query object the feedback is attached to, echoed back. category and mcp_call_id, when sent, are recorded in it under those names.
-        applied:
-          type: integer
-          description: 'Count of corrections applied automatically. CURRENTLY always 0: public submissions are logged for review, never auto-applied.'
-        unchanged:
-          type: integer
-          description: Count of corrections whose target already had the requested value. Currently always 0 for public submissions.
-        failed:
-          type: integer
-          description: Count of corrections that could not be processed. Currently always 0 for public submissions.
-        logged:
-          type: integer
-          description: Count of corrections recorded for human review.
-        corrections:
-          type: array
-          items:
-            $ref: '#/components/schemas/FeedbackCorrectionResult'
-          description: Per-correction outcomes, in submission order.
-      required:
-      - feedback_id
-      - type
-      - query
-      - applied
-      - unchanged
-      - failed
-      - logged
-      - corrections
-    MissedAlertChange:
-      type: object
-      properties:
-        source_url:
-          type: string
-          description: URL of the media that should have produced an alert.
-        approximate_timestamp_seconds:
-          type: number
-          description: Approximate position of the missed occurrence, in seconds from the start of the media.
-        entity_id:
-          type: string
-          description: Public id ("ent_{n}") of the tracked entity the missed alert concerns.
-      required:
-      - source_url
-      additionalProperties: {}
-      description: 'For issue_type missed_alert: an expectation with no alert row to target. Omit the correction id and describe where the alert should have fired.'
-    TranscriptQuote:
-      type: object
-      properties:
-        quarters:
-          type: integer
-          description: Number of 15-minute blocks in the video, ceiling'd, minimum 1.
-        rows:
-          type: integer
-          description: 'Total unlock cost in rows: 75 rows per 15-minute block.'
-      required:
-      - quarters
-      - rows
-    WrongEntityChange:
-      type: object
-      properties:
-        entity_id:
-          type: string
-          description: Public id ("ent_{n}") of the entity the row should point at.
-        entity_name:
-          type: string
-          description: Name of the correct entity when you do not have its id.
-        entity_type:
-          type: string
-          description: 'Type of the correct entity: person, organization, product, topic, or channel.'
-      additionalProperties: {}
-      description: 'For issue_type wrong_entity (and wrong_person): the entity the row should have been attributed to.'
-    FeedbackReadbackCorrection:
-      type: object
-      properties:
-        item_id:
-          type: string
-          description: The correction target id as submitted (or a generated placeholder when omitted).
-        item_kind:
-          type: string
-          description: 'Inferred kind of the target. Values include: recommendation, sponsor_entity, entity, entity_merge, mention, appearance, alert, alert_expectation, unknown.'
-        issue_type:
-          type:
-          - string
-          - 'null'
-          description: The issue_type as submitted. Null when the correction carried only a reason or class.
-        reason:
-          type:
-          - string
-          - 'null'
-          description: The commercial reason code as submitted. Null unless the correction was a commercial-class dispute.
-        suggested_change:
-          type:
-          - object
-          - 'null'
-          additionalProperties: {}
-          description: The suggested_change object as submitted. Null when none was supplied.
-        notes:
-          type:
-          - string
-          - 'null'
-          description: The per-correction notes as submitted. Null when none were supplied.
-        status:
-          type: string
-          enum:
-          - pending_review
-          - needs_information
-          - accepted
-          - accepted_with_changes
-          - rejected
-          - withdrawn
-          - applied
-          - reverted
-          description: 'Review status in the public vocabulary. Values: pending_review (submitted; a reviewer has not finished with it), needs_information (a reviewer needs more detail from you; add context in a support thread quoting the feedback_id), accepted (the correction was accepted as submitted), accepted_with_changes (accepted, but the reviewer resolved it differently than proposed), rejected (reviewed and declined), withdrawn (withdrawn by the submitter before review), applied (the accepted change is live in the index; accepted does not imply applied), reverted (a previously applied change was rolled back).'
-        resolution_note:
-          type:
-          - string
-          - 'null'
-          description: Reviewer-written public note about how the correction was resolved. Null until a reviewer leaves one.
-        created_at:
-          type:
-          - string
-          - 'null'
-          description: When the correction row was created.
-      required:
-      - item_id
-      - item_kind
-      - issue_type
-      - reason
-      - suggested_change
-      - notes
-      - status
-      - resolution_note
-      - created_at
-    RefusedQuote:
-      allOf:
-      - $ref: '#/components/schemas/TranscriptQuote'
-      - type: object
-        properties:
-          charge:
-            type: object
-            properties:
-              unit:
-                type: string
-                enum:
-                - rows
-                - credits
-              amount:
-                type: number
-              from:
-                type: string
-                enum:
-                - included
-                - on_demand
-                - mixed
-                description: Where the charge would come from at the current balance.
-            required:
-            - unit
-            - amount
-            - from
-            description: What the purchase would charge at the current balance. Absent when no current price could be read.
-          max_on_demand_cents:
-            type: integer
-            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
-      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
     FeedbackReadbackResponse:
       type: object
       properties:
@@ -1073,36 +1028,106 @@ components:
       - notes
       - created_at
       - corrections
-    DeliveryIssueChange:
+    RefusedQuote:
+      allOf:
+      - $ref: '#/components/schemas/TranscriptQuote'
+      - type: object
+        properties:
+          charge:
+            type: object
+            properties:
+              unit:
+                type: string
+                enum:
+                - rows
+                - credits
+              amount:
+                type: number
+              from:
+                type: string
+                enum:
+                - included
+                - on_demand
+                - mixed
+                description: Where the charge would come from at the current balance.
+            required:
+            - unit
+            - amount
+            - from
+            description: What the purchase would charge at the current balance. Absent when no current price could be read.
+          max_on_demand_cents:
+            type: integer
+            description: The on-demand money, in whole cents, this purchase needs beyond included credits at the current balance.
+      description: 'The refused price, on a priced refusal: quota_exceeded, spend_limit_exceeded and paid_plan_required.'
+    FeedbackCorrectionResult:
       type: object
       properties:
-        channel:
+        item_id:
+          type: string
+          description: The correction target id you supplied (or a generated placeholder when omitted).
+        item_kind:
+          type: string
+          description: 'Inferred kind of the target. Values include: recommendation, sponsor_entity, entity, entity_merge, mention, appearance, alert, alert_expectation, unknown.'
+        status:
           type: string
           enum:
-          - email
-          - webhook
-          - slack
-          description: 'The delivery channel the issue concerns. Values: email, webhook, slack.'
+          - applied
+          - unchanged
+          - not_found
+          - invalid
+          - logged
+          description: 'Outcome. Values: applied (the correction was applied automatically), unchanged (the target already had the requested value), not_found (the target does not exist), invalid (the correction payload was malformed for its kind), logged (recorded for human review; no automatic apply).'
+        reason:
+          type: string
+          description: The reason code you supplied, echoed back.
+        message:
+          type: string
+          description: Human-readable explanation of the outcome.
       required:
-      - channel
-      additionalProperties: {}
-      description: 'For issue_type delivery_issue: targets the delivery row (the correction id) and names the channel that was wrong or never received.'
+      - item_id
+      - item_kind
+      - status
+  headers:
+    RateLimit-Limit:
+      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
+      schema:
+        type: integer
+    Idempotency-Replayed:
+      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
+      schema:
+        type: string
+        enum:
+        - 'true'
+    RateLimit-Reset:
+      description: Unix time in seconds when the current window ends.
+      schema:
+        type: integer
+    Retry-After:
+      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
+      schema:
+        type: integer
+    RateLimit-Remaining:
+      description: Requests left in the current window.
+      schema:
+        type: integer
+    X-Request-Id:
+      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
+      schema:
+        type: string
+    X-Arcmira-Version:
+      description: The API version that answered. Always v1.
+      schema:
+        type: string
+        enum:
+        - v1
   responses:
-    RateLimited:
-      description: Rate limit exceeded. Retry-After carries the wait.
+    PermissionError:
+      description: Permission error
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
         X-Arcmira-Version:
           $ref: '#/components/headers/X-Arcmira-Version'
-        RateLimit-Limit:
-          $ref: '#/components/headers/RateLimit-Limit'
-        RateLimit-Remaining:
-          $ref: '#/components/headers/RateLimit-Remaining'
-        RateLimit-Reset:
-          $ref: '#/components/headers/RateLimit-Reset'
-        Retry-After:
-          $ref: '#/components/headers/Retry-After'
       content:
         application/json:
           schema:
@@ -1118,13 +1143,21 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    InvalidRequest:
-      description: Invalid request
+    RateLimited:
+      description: Rate limit exceeded. Retry-After carries the wait.
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
         X-Arcmira-Version:
           $ref: '#/components/headers/X-Arcmira-Version'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimit-Limit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimit-Remaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimit-Reset'
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
       content:
         application/json:
           schema:
@@ -1151,8 +1184,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    PermissionError:
-      description: Permission error
+    InvalidRequest:
+      description: Invalid request
       headers:
         X-Request-Id:
           $ref: '#/components/headers/X-Request-Id'
@@ -1162,39 +1195,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-  headers:
-    X-Arcmira-Version:
-      description: The API version that answered. Always v1.
-      schema:
-        type: string
-        enum:
-        - v1
-    Idempotency-Replayed:
-      description: true when this is the stored response to an earlier request with the same Idempotency-Key; the request did not run again.
-      schema:
-        type: string
-        enum:
-        - 'true'
-    RateLimit-Remaining:
-      description: Requests left in the current window.
-      schema:
-        type: integer
-    RateLimit-Reset:
-      description: Unix time in seconds when the current window ends.
-      schema:
-        type: integer
-    RateLimit-Limit:
-      description: Requests allowed per 60-second window for this credential, as GET /v1/me rate_limit reports.
-      schema:
-        type: integer
-    Retry-After:
-      description: Seconds to wait before retrying. error.retry_after_seconds carries the same value on an error.
-      schema:
-        type: integer
-    X-Request-Id:
-      description: The request id, echoed from an X-Request-Id request header or minted as req_<uuid>. error.request_id carries the same value. Quote it when reporting a problem.
-      schema:
-        type: string
   securitySchemes:
     bearerAuth:
       type: http
