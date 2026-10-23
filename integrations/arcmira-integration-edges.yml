@@ -187,6 +187,37 @@ edges:
     detected: '2026-10-20'
   detected_by: sweep-agent-skills.py
   first_seen: '2026-10-20'
+- partner_name: JSR
+  partner: null
+  partner_match: null
+  type: register
+  direction: provider-built
+  category: official SDK (JavaScript/TypeScript, JSR)
+  evidence: https://jsr.io/@arcmira/sdk
+  channel: package-registry
+  relationship: distribution-channel
+  contract_reference:
+    register: JSR (jsr.io public API JSON)
+    spec_file: null
+    language: JavaScript/TypeScript
+    packages:
+    - name: '@arcmira/sdk'
+      version: 0.6.2
+      released: '2026-10-15'
+      released_field: versions.createdAt
+      lapsed: false
+      page: https://jsr.io/@arcmira/sdk
+      github_repository: https://github.com/arcmira/arcmira
+      repo_leg: github-org:arcmira
+      publisher_leg: org:arcmira
+      matched_by: github-org
+    current: true
+    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
+      24 months or archived'
+    detected_by: sweep-jsr-javascript-registry.py
+    detected: '2026-10-23'
+  detected_by: sweep-jsr-javascript-registry.py
+  first_seen: '2026-10-23'
 generated: '2026-10-14'
 method: searched
 checked:
@@ -210,5 +241,7 @@ checked:
 - https://officialskills.sh/sitemap.xml
 - https://skillsmp.com/sitemap.xml
 - https://www.skills.sh/sitemap.xml
+- https://jsr.io/api/packages
+- https://jsr.io/api/scopes
 source:
 - https://a2aregistry.org/api/agents

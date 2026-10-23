@@ -130,3 +130,34 @@
     detected: '2026-10-20'
   status: not-a-workflow
   arazzo: null
+- slug: arcmira-jsr
+  label: JSR
+  partner_name: JSR
+  category: official SDK (JavaScript/TypeScript, JSR)
+  type: register
+  channel: package-registry
+  evidence: https://jsr.io/@arcmira/sdk
+  source: edge
+  relationship: distribution-channel
+  contract_reference:
+    register: JSR (jsr.io public API JSON)
+    spec_file: null
+    language: JavaScript/TypeScript
+    packages:
+    - name: '@arcmira/sdk'
+      version: 0.6.2
+      released: '2026-10-15'
+      released_field: versions.createdAt
+      lapsed: false
+      page: https://jsr.io/@arcmira/sdk
+      github_repository: https://github.com/arcmira/arcmira
+      repo_leg: github-org:arcmira
+      publisher_leg: org:arcmira
+      matched_by: github-org
+    current: true
+    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
+      24 months or archived'
+    detected_by: sweep-jsr-javascript-registry.py
+    detected: '2026-10-23'
+  status: not-a-workflow
+  arazzo: null
