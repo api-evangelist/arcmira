@@ -64,5 +64,146 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Arcmira is a company surfaced via the API Evangelist harvest backlog (source: new-submission) and added to the network as a stub for full-pipeline profiling.
-- https://arcmira.com
+Arcmira provides AI-powered search of YouTube transcript data, enabling developers to retrieve timestamped passages, speaker mentions, sponsors, and ad reads. Their platform offers JavaScript and Python SDKs, a CLI, and an OAuth-enabled remote MCP for integrating spoken web insights into applications. The service includes monitoring capabilities and commercial intelligence features, targeting developers building conversational AI and analytics tools.
+
+**Areas:** Artificial Intelligence · Search · YouTube · Transcripts · SDK
+
+## Arcmira on APIs.io
+
+Everything profiled for Arcmira is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/arcmira/](https://apis.io/providers/arcmira/)** — or go straight to one of the APIs or properties below.
+
+### APIs (11)
+
+- [Arcmira Channels API](https://apis.io/apis/arcmira/arcmira-channels-api/) — The Channels API from Arcmira — 2 operation(s) for channels.
+- [Arcmira Entities API](https://apis.io/apis/arcmira/arcmira-entities-api/) — The Entities API from Arcmira — 3 operation(s) for entities.
+- [Arcmira Feedback API](https://apis.io/apis/arcmira/arcmira-feedback-api/) — The Feedback API from Arcmira — 2 operation(s) for feedback.
+- [Arcmira Mentions API](https://apis.io/apis/arcmira/arcmira-mentions-api/) — The Mentions API from Arcmira — 2 operation(s) for mentions.
+- [Arcmira Meta API](https://apis.io/apis/arcmira/arcmira-meta-api/) — The Meta API from Arcmira — 6 operation(s) for meta.
+- [Arcmira Monitors API](https://apis.io/apis/arcmira/arcmira-monitors-api/) — The Monitors API from Arcmira — 7 operation(s) for monitors.
+- [Arcmira Recommendations API](https://apis.io/apis/arcmira/arcmira-recommendations-api/) — The Recommendations API from Arcmira — 2 operation(s) for recommendations.
+- [Arcmira Search API](https://apis.io/apis/arcmira/arcmira-search-api/) — The Search API from Arcmira — 1 operation(s) for search.
+- [Arcmira Trackers API](https://apis.io/apis/arcmira/arcmira-trackers-api/) — The Trackers API from Arcmira — 3 operation(s) for trackers.
+- [Arcmira Transcriptions API](https://apis.io/apis/arcmira/arcmira-transcriptions-api/) — The Transcriptions API from Arcmira — 1 operation(s) for transcriptions.
+- [Arcmira Transcripts API](https://apis.io/apis/arcmira/arcmira-transcripts-api/) — The Transcripts API from Arcmira — 2 operation(s) for transcripts.
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### MCP servers (2)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [Arcmira documentation MCP server (public)](https://apis.io/servers/arcmira/arcmira-documentation-mcp-server-public/)
+- [Arcmira: YouTube Transcript Search](https://apis.io/servers/arcmira/io-github-arcmira-arcmira/)
+
+#### JSON Schema (6)
+
+The data models the API reads and writes.
+
+- [ChannelSponsorsResponse](https://apis.io/schemas/arcmira/arcmira-channel-sponsors-response/)
+- [EntityMomentumResponse](https://apis.io/schemas/arcmira/arcmira-entity-momentum-response/)
+- [MeResponse](https://apis.io/schemas/arcmira/arcmira-me-response/)
+- [MentionCountsResponse](https://apis.io/schemas/arcmira/arcmira-mention-counts-response/)
+- [TranscriptResponse](https://apis.io/schemas/arcmira/arcmira-transcript-response/)
+- [TranscriptSearchResponse](https://apis.io/schemas/arcmira/arcmira-transcript-search-response/)
+
+#### JSON-LD (1)
+
+Linked-data contexts for the provider's vocabulary.
+
+- [Arcmira Context](https://apis.io/jsonld/arcmira/arcmira-context/)
+
+#### Overlays (1)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Arcmira Openapi Overlay](https://apis.io/overlays/arcmira/arcmira-openapi-overlay/)
+
+#### Governance rules (1)
+
+Spectral rulesets for the provider's contracts.
+
+- [Arcmira API Rules](https://apis.io/rules/arcmira/arcmira-rules/)
+
+#### Security (2)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Arcmira Authentication](https://apis.io/security/arcmira/arcmira-authentication/)
+- [Arcmira Domain Security](https://apis.io/security/arcmira/arcmira-domain-security/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Arcmira Plans Pricing](https://apis.io/plans/arcmira/arcmira-plans-pricing/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://arcmira.com)
+- [Documentation](https://arcmira.com/docs)
+- [Getting started](https://arcmira.com/agent-setup)
+- [API reference](https://arcmira.com/docs/api-reference/search/retrieve-spoken-transcript-slices-for-one-topic)
+- [Pricing](https://arcmira.com/pricing)
+- [Changelog](https://arcmira.com/docs/changelog)
+- [Terms of service](https://arcmira.com/terms)
+- [Privacy policy](https://arcmira.com/privacy)
+- [GitHub](https://github.com/arcmira)
+
+## API Evangelist rating
+
+**Kin Score 64.3** — strong · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 75.0 |
+| Contract quality | 70.3 |
+| Contract governance | 22.0 |
+| Operational transparency | 21.1 |
+| Developer ergonomics | 71.4 |
+| Access clarity | 76.3 |
+
+**Agent readiness 68.9** — agent-native
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | documented (partial credit) |
+| Auth Clarity | served (partial credit) |
+| Idempotency | verified |
+| Error Semantics | verified |
+| OpenAPI Examples | partial |
+| Rate Limit Signal | verified |
+| Event Surface Described | — |
+| Agent Skills | yes |
+| Well Known Catalog | yes |
+| Consent Identity | — |
+| Agent Card | conformant |
+| Dry Run Mode | — |
+| Delegated Identity | served (partial credit) |
+| Protected Resource Metadata | verified |
+| Dynamic Client Registration | yes |
+| Agentic Commerce | — |
+| Pagination Ratio | paginated |
+| Operation Distinctiveness | distinct |
+
+**Regulatory alignment 22.7** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/arcmira/](https://apis.io/providers/arcmira/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Arcmira: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/arcmira/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
